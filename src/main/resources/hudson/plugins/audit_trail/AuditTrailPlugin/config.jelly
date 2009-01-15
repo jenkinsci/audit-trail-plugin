@@ -1,0 +1,17 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:section title="${%Audit Trail}">
+    <f:entry title="${%Log Location}" help="/plugin/audit-trail/help-log.html">
+      <f:textbox name="log" value="${it.log}"/>
+    </f:entry>
+    <f:entry title="${%Log File Size MB}" help="/plugin/audit-trail/help-limit.html">
+      <f:textbox name="limit" value="${it.limit}"/>
+    </f:entry>
+    <f:entry title="${%Log File Count}" help="/plugin/audit-trail/help-count.html">
+      <f:textbox name="count" value="${it.count}"/>
+    </f:entry>
+    <f:entry title="${%URL Patterns to Log}" help="/plugin/audit-trail/help-pattern.html">
+      <f:textbox name="pattern" value="${it.pattern}"
+       checkUrl="'${rootURL}/plugin/audit-trail/regexCheck?value='+encode(this.value)"/>
+    </f:entry>
+  </f:section>
+</j:jelly>
