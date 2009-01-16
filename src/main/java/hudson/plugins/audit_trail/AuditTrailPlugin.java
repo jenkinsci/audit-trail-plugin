@@ -3,6 +3,7 @@ package hudson.plugins.audit_trail;
 import hudson.Plugin;
 import hudson.logging.LogRecorder;
 import hudson.logging.LogRecorderManager;
+import hudson.logging.WeakLogHandler;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Hudson;
@@ -81,7 +82,7 @@ public class AuditTrailPlugin extends Plugin {
                 if (!lrm.logRecorders.containsKey("Audit Trail")) {
                     LogRecorder logRecorder = new LogRecorder("Audit Trail");
                     logRecorder.targets.add(
-                        new LogRecorder.Target(AuditTrailFilter.class.getName(), Level.INFO));
+                        new LogRecorder.Target(AuditTrailFilter.class.getName(), Level.CONFIG));
                     try { logRecorder.save(); } catch (Exception ex) { }
                     lrm.logRecorders.put("Audit Trail", logRecorder);
                 }
@@ -121,9 +122,29 @@ public class AuditTrailPlugin extends Plugin {
                            + record.getMessage() + '\n';
                 }
             });
+            logger.setLevel(Level.CONFIG);
             logger.addHandler(handler);
+            // Workaround for SJSWS logging.. no need for audit trail to appear in logs/errors
+            // since we have our own log file, BUT this handler ignores its level setting and
+            // logs anything it receives.  So don't use parent handlers..
+            logger.setUseParentHandlers(false);
+            // ..but Hudson's LogRecorders run via a handler on the root logger so we'll
+            // route messages directly to that handler..
+            logger.addHandler(new RouteToHudsonHandler());
         }
         catch (IOException ex) { ex.printStackTrace(); }
+    }
+
+    private static class RouteToHudsonHandler extends Handler {
+        public void publish(LogRecord record) {
+            for (Handler handler : Logger.getLogger("").getHandlers()) {
+                if (handler instanceof WeakLogHandler) {
+                    handler.publish(record);
+                }
+            }
+        }
+        public void flush() { }
+        public void close() { }
     }
 
     /**
