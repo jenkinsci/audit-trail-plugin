@@ -9,9 +9,14 @@
     <f:entry title="${%Log File Count}" help="/plugin/audit-trail/help-count.html">
       <f:textbox name="count" value="${it.count}"/>
     </f:entry>
-    <f:entry title="${%URL Patterns to Log}" help="/plugin/audit-trail/help-pattern.html">
-      <f:textbox name="pattern" value="${it.pattern}"
-       checkUrl="'${rootURL}/plugin/audit-trail/regexCheck?value='+encode(this.value)"/>
-    </f:entry>
+    <f:advanced>
+      <f:entry title="${%URL Patterns to Log}" help="/plugin/audit-trail/help-pattern.html">
+        <f:textbox name="pattern" value="${it.pattern}"
+         checkUrl="'${rootURL}/plugin/audit-trail/regexCheck?value='+encode(this.value)"/>
+      </f:entry>
+      <f:entry title="${%Log how each build is triggered}">
+        <f:checkbox name="logBuildCause" checked="${it.logBuildCause}"/>
+      </f:entry>
+    </f:advanced>
   </f:section>
 </j:jelly>

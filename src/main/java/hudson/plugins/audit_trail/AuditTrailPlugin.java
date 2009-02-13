@@ -4,9 +4,13 @@ import hudson.Plugin;
 import hudson.logging.LogRecorder;
 import hudson.logging.LogRecorderManager;
 import hudson.logging.WeakLogHandler;
+import hudson.model.CauseAction;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Hudson;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.listeners.RunListener;
 import hudson.security.ACL;
 import hudson.security.ChainedServletFilter;
 import hudson.security.HudsonFilter;
@@ -36,15 +40,17 @@ import org.acegisecurity.context.SecurityContextHolder;
  * @author Alan.Harder@sun.com
  */
 public class AuditTrailPlugin extends Plugin {
-    private String log = "", pattern =
-      ".*/(?:configSubmit|doDelete|build|toggleLogKeep|doWipeOutWorkspace|createItem|createView)";
+    private String log = "", pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
+      + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline)";
     private int limit = 1, count = 1;
+    private boolean logBuildCause = true;
     private transient ServletContext context;
 
     public String getLog() { return log; }
     public int getLimit() { return limit; }
     public int getCount() { return count; }
     public String getPattern() { return pattern; }
+    public boolean getLogBuildCause() { return logBuildCause; }
 
     @Override public void setServletContext(ServletContext context) {
         this.context = context;
@@ -73,6 +79,9 @@ public class AuditTrailPlugin extends Plugin {
         load();
         applySettings();
 
+        // Add listener for recording build triggers
+        new AuditTrailRunListener().register();
+
         // Add LogRecorder if not already configured.. but wait for Hudson to initialize:
         new Thread() {
             @Override public void run() {
@@ -97,6 +106,7 @@ public class AuditTrailPlugin extends Plugin {
         limit = formData.optInt("limit", 1);
         count = formData.optInt("count", 1);
         pattern = formData.optString("pattern");
+        logBuildCause = formData.optBoolean("logBuildCause", true);
         save();
         applySettings();
     }
@@ -145,6 +155,31 @@ public class AuditTrailPlugin extends Plugin {
         }
         public void flush() { }
         public void close() { }
+    }
+
+    private class AuditTrailRunListener extends RunListener<Run> {
+        private Logger LOG = Logger.getLogger(AuditTrailRunListener.class.getName());
+
+        private AuditTrailRunListener() {
+            super(Run.class);
+        }
+
+        @Override
+        public void onStarted(Run run, TaskListener listener) {
+            if (AuditTrailPlugin.this.logBuildCause) {
+                StringBuilder buf = new StringBuilder(100);
+                try {
+                    for (CauseAction cause : run.getActions(CauseAction.class)) {
+                        if (buf.length() > 0) buf.append(", ");
+                        buf.append(cause.getShortDescription());
+                    }
+                } catch (NoClassDefFoundError ex) {
+                    // Avoid failure on pre-1.283 Hudson (no CauseAction)
+                }
+                if (buf.length() == 0) buf.append("Started");
+                LOG.config(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
+            }
+        }
     }
 
     /**
