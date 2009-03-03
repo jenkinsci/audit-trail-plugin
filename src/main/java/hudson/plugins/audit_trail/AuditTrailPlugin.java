@@ -4,6 +4,7 @@ import hudson.Plugin;
 import hudson.logging.LogRecorder;
 import hudson.logging.LogRecorderManager;
 import hudson.logging.WeakLogHandler;
+import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
@@ -91,7 +92,7 @@ public class AuditTrailPlugin extends Plugin {
                 if (!lrm.logRecorders.containsKey("Audit Trail")) {
                     LogRecorder logRecorder = new LogRecorder("Audit Trail");
                     logRecorder.targets.add(
-                        new LogRecorder.Target(AuditTrailFilter.class.getName(), Level.CONFIG));
+                        new LogRecorder.Target(AuditTrailFilter.class.getPackage().getName(), Level.CONFIG));
                     try { logRecorder.save(); } catch (Exception ex) { }
                     lrm.logRecorders.put("Audit Trail", logRecorder);
                 }
@@ -117,7 +118,7 @@ public class AuditTrailPlugin extends Plugin {
         }
         catch (Exception ex) { ex.printStackTrace(); }
 
-        Logger logger = Logger.getLogger("hudson.plugins.audit_trail");
+        Logger logger = Logger.getLogger(AuditTrailFilter.class.getPackage().getName());
         for (Handler handler : logger.getHandlers()) {
             logger.removeHandler(handler);
             handler.close();
@@ -168,13 +169,12 @@ public class AuditTrailPlugin extends Plugin {
         public void onStarted(Run run, TaskListener listener) {
             if (AuditTrailPlugin.this.logBuildCause) {
                 StringBuilder buf = new StringBuilder(100);
-                try {
-                    for (CauseAction cause : run.getActions(CauseAction.class)) {
+                // Code below works only on Hudson 1.288+ (use Audit Trail 1.2 for older Hudson)
+                for (CauseAction action : run.getActions(CauseAction.class)) {
+                    for (Cause cause : action.getCauses()) {
                         if (buf.length() > 0) buf.append(", ");
                         buf.append(cause.getShortDescription());
                     }
-                } catch (NoClassDefFoundError ex) {
-                    // Avoid failure on pre-1.283 Hudson (no CauseAction)
                 }
                 if (buf.length() == 0) buf.append("Started");
                 LOG.config(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
