@@ -12,5 +12,5 @@
     <packaging>hpi</packaging>
     <name>Audit Trail</name>
     <version>1.4-SNAPSHOT</version>
-    <url>http://hudson.gotdns.com/wiki/display/HUDSON/Audit+Trail+Plugin</url>
+    <url>http://wiki.hudson-ci.org/display/HUDSON/Audit+Trail+Plugin</url>
 </project>
