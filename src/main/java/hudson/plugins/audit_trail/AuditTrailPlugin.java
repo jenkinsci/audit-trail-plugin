@@ -23,6 +23,7 @@
  */
 package hudson.plugins.audit_trail;
 
+import hudson.Extension;
 import hudson.Plugin;
 import hudson.logging.LogRecorder;
 import hudson.logging.LogRecorderManager;
@@ -39,7 +40,7 @@ import hudson.security.ACL;
 import hudson.security.ChainedServletFilter;
 import hudson.security.HudsonFilter;
 import hudson.security.SecurityRealm;
-import hudson.util.FormFieldValidator;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,9 +56,9 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 import org.acegisecurity.context.SecurityContextHolder;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Keep audit trail of particular Hudson operations, such as configuring jobs.
@@ -89,7 +90,7 @@ public class AuditTrailPlugin extends Plugin {
                     public SecurityRealm.SecurityComponents createSecurityComponents() {
                         return securityRealm.createSecurityComponents();
                     }
-                    public Descriptor<SecurityRealm> getDescriptor() {
+                    @Override public Descriptor<SecurityRealm> getDescriptor() {
                         return null;
                     }
                     @Override public Filter createFilter(FilterConfig filterConfig) {
@@ -102,9 +103,6 @@ public class AuditTrailPlugin extends Plugin {
         });
         load();
         applySettings();
-
-        // Add listener for recording build triggers
-        new AuditTrailRunListener().register();
 
         // Add LogRecorder if not already configured.. but wait for Hudson to initialize:
         new Thread() {
@@ -124,7 +122,7 @@ public class AuditTrailPlugin extends Plugin {
         }.start();
     }
 
-    @Override public void configure(JSONObject formData)
+    @Override public void configure(StaplerRequest req, JSONObject formData)
             throws IOException, ServletException, FormException {
         log = formData.optString("log");
         limit = formData.optInt("limit", 1);
@@ -140,6 +138,8 @@ public class AuditTrailPlugin extends Plugin {
             AuditTrailFilter.uriPattern = Pattern.compile(pattern);
         }
         catch (Exception ex) { ex.printStackTrace(); }
+
+        LISTENER.setActive(logBuildCause);
 
         Logger logger = Logger.getLogger(AuditTrailFilter.class.getPackage().getName());
         for (Handler handler : logger.getHandlers()) {
@@ -181,18 +181,24 @@ public class AuditTrailPlugin extends Plugin {
         public void close() { }
     }
 
-    private class AuditTrailRunListener extends RunListener<Run> {
+    @Extension public static final AuditTrailRunListener LISTENER = new AuditTrailRunListener();
+
+    public static class AuditTrailRunListener extends RunListener<Run> {
+        private boolean active = false;
         private Logger LOG = Logger.getLogger(AuditTrailRunListener.class.getName());
 
         private AuditTrailRunListener() {
             super(Run.class);
         }
 
+        private void setActive(boolean active) {
+            this.active = active;
+        }
+
         @Override
         public void onStarted(Run run, TaskListener listener) {
-            if (AuditTrailPlugin.this.logBuildCause) {
+            if (this.active) {
                 StringBuilder buf = new StringBuilder(100);
-                // Code below works only on Hudson 1.288+ (use Audit Trail 1.2 for older Hudson)
                 for (CauseAction action : run.getActions(CauseAction.class)) {
                     for (Cause cause : action.getCauses()) {
                         if (buf.length() > 0) buf.append(", ");
@@ -208,21 +214,17 @@ public class AuditTrailPlugin extends Plugin {
     /**
      * Validate regular expression syntax.
      */
-    public void doRegexCheck(StaplerRequest req, StaplerResponse rsp)
+    public FormValidation doRegexCheck(@QueryParameter final String value)
             throws IOException, ServletException {
-        // false==No permission needed for simple syntax check
-        new FormFieldValidator(req, rsp, false) {
-            protected void check() throws IOException, ServletException {
-                try {
-                    Pattern.compile(request.getParameter("value"));
-                    ok();
-                }
-                catch (Exception ex) {
-                    errorWithMarkup("Invalid <a href=\""
-                        + "http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/Pattern.html"
-                        + "\">regular expression</a> (" + ex.getMessage() + ")");
-                }
-            }
-        }.process();
+        // No permission needed for simple syntax check
+        try {
+            Pattern.compile(value);
+            return FormValidation.ok();
+        }
+        catch (Exception ex) {
+            return FormValidation.errorWithMarkup("Invalid <a href=\""
+                + "http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/Pattern.html"
+                + "\">regular expression</a> (" + ex.getMessage() + ")");
+        }
     }
 }
