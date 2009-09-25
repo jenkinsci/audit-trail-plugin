@@ -23,7 +23,6 @@
  */
 package hudson.plugins.audit_trail;
 
-import hudson.model.Hudson;
 import hudson.model.User;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

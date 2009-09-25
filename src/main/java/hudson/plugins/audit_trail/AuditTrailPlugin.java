@@ -30,17 +30,14 @@ import hudson.logging.LogRecorderManager;
 import hudson.logging.WeakLogHandler;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
-import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Hudson;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import hudson.security.ACL;
-import hudson.security.ChainedServletFilter;
-import hudson.security.HudsonFilter;
-import hudson.security.SecurityRealm;
 import hudson.util.FormValidation;
+import hudson.util.PluginServletFilter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,8 +48,6 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.logging.Formatter;
 import java.util.regex.Pattern;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
@@ -82,27 +77,11 @@ public class AuditTrailPlugin extends Plugin {
     }
 
     @Override public void start() throws Exception {
-        final HudsonFilter mainFilter = HudsonFilter.get(context);
-        // Replace object in ServletContext with our wrapper to add AuditTrailFilter
-        context.setAttribute(HudsonFilter.class.getName(), new HudsonFilter() {
-            @Override public void reset(final SecurityRealm securityRealm) throws ServletException {
-                SecurityRealm wrappedRealm = securityRealm == null ? null : new SecurityRealm() {
-                    public SecurityRealm.SecurityComponents createSecurityComponents() {
-                        return securityRealm.createSecurityComponents();
-                    }
-                    @Override public Descriptor<SecurityRealm> getDescriptor() {
-                        return null;
-                    }
-                    @Override public Filter createFilter(FilterConfig filterConfig) {
-                        return new ChainedServletFilter(
-                            securityRealm.createFilter(filterConfig), new AuditTrailFilter());
-                    }
-                };
-                mainFilter.reset(wrappedRealm);
-            }
-        });
         load();
         applySettings();
+
+        // Add Filter to watch all requests and log matching ones
+        PluginServletFilter.addFilter(new AuditTrailFilter());
 
         // Add LogRecorder if not already configured.. but wait for Hudson to initialize:
         new Thread() {
