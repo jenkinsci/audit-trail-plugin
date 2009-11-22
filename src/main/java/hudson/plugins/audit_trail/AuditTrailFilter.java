@@ -23,6 +23,7 @@
  */
 package hudson.plugins.audit_trail;
 
+import hudson.model.Hudson;
 import hudson.model.User;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -51,8 +52,14 @@ public class AuditTrailFilter implements Filter {
         String uri = ((HttpServletRequest)req).getRequestURI();
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
-            String username = user != null ? user.getId() : "?";
-            LOG.config(uri + " by " + username);
+            String username = user != null ? user.getId() : "?", extra = "";
+            // For queue items, show what task is in the queue:
+            if (uri.startsWith("/queue/item/")) try {
+                extra = " (" + Hudson.getInstance().getQueue().getItem(Integer.parseInt(
+                        uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
+            } catch (Exception ignore) { }
+
+            LOG.config(uri + extra + " by " + username);
         }
         chain.doFilter(req, res);
     }

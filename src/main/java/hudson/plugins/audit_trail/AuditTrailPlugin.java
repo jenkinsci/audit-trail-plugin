@@ -82,7 +82,9 @@ public class AuditTrailPlugin extends Plugin {
 
         // Add Filter to watch all requests and log matching ones
         PluginServletFilter.addFilter(new AuditTrailFilter());
+    }
 
+    @Override public void postInitialize() {
         // Add LogRecorder if not already configured.. but wait for Hudson to initialize:
         new Thread() {
             @Override public void run() {
