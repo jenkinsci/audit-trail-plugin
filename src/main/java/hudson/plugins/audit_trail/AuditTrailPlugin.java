@@ -48,7 +48,6 @@ import java.util.logging.Logger;
 import java.util.logging.LogRecord;
 import java.util.logging.Formatter;
 import java.util.regex.Pattern;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -64,17 +63,12 @@ public class AuditTrailPlugin extends Plugin {
       + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline)";
     private int limit = 1, count = 1;
     private boolean logBuildCause = true;
-    private transient ServletContext context;
 
     public String getLog() { return log; }
     public int getLimit() { return limit; }
     public int getCount() { return count; }
     public String getPattern() { return pattern; }
     public boolean getLogBuildCause() { return logBuildCause; }
-
-    @Override public void setServletContext(ServletContext context) {
-        this.context = context;
-    }
 
     @Override public void start() throws Exception {
         load();
