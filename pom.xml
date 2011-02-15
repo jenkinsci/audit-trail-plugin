@@ -2,17 +2,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jvnet.hudson.plugins</groupId>
+        <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.358</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>1.396</version>
     </parent>
 
     <artifactId>audit-trail</artifactId>
     <packaging>hpi</packaging>
     <name>Audit Trail</name>
     <version>1.5-SNAPSHOT</version>
-    <url>http://wiki.hudson-ci.org/display/HUDSON/Audit+Trail+Plugin</url>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Audit+Trail+Plugin</url>
 
     <developers>
       <developer>
@@ -21,4 +20,10 @@
         <email>mindless@dev.java.net</email>
       </developer>
     </developers>
+
+    <scm>
+      <connection>scm:git:git://github.com/jenkinsci/audit-trail-plugin.git</connection>
+      <developerConnection>scm:git:git@github.com:jenkinsci/audit-trail-plugin.git</developerConnection>
+      <url>https://github.com/jenkinsci/audit-trail-plugin</url>
+    </scm>
 </project>

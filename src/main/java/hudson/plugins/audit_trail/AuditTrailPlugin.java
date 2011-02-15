@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2009, Sun Microsystems, Inc., Alan Harder
+ * Copyright (c) 2004-2011, Sun Microsystems, Inc., Alan Harder
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,8 +56,8 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * Keep audit trail of particular Hudson operations, such as configuring jobs.
- * @author Alan.Harder@sun.com
+ * Keep audit trail of particular Jenkins operations, such as configuring jobs.
+ * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
     private String log = "", pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
@@ -85,7 +85,7 @@ public class AuditTrailPlugin extends Plugin {
     }
 
     @Override public void postInitialize() {
-        // Add LogRecorder if not already configured.. but wait for Hudson to initialize:
+        // Add LogRecorder if not already configured.. but wait for Jenkins to initialize:
         new Thread() {
             @Override public void run() {
                 try { Thread.sleep(20000); } catch (InterruptedException ex) { }
@@ -143,14 +143,14 @@ public class AuditTrailPlugin extends Plugin {
             // since we have our own log file, BUT this handler ignores its level setting and
             // logs anything it receives.  So don't use parent handlers..
             logger.setUseParentHandlers(false);
-            // ..but Hudson's LogRecorders run via a handler on the root logger so we'll
+            // ..but Jenkins' LogRecorders run via a handler on the root logger so we'll
             // route messages directly to that handler..
-            logger.addHandler(new RouteToHudsonHandler());
+            logger.addHandler(new RouteToJenkinsHandler());
         }
         catch (IOException ex) { ex.printStackTrace(); }
     }
 
-    private static class RouteToHudsonHandler extends Handler {
+    private static class RouteToJenkinsHandler extends Handler {
         public void publish(LogRecord record) {
             for (Handler handler : Logger.getLogger("").getHandlers()) {
                 if (handler instanceof WeakLogHandler) {

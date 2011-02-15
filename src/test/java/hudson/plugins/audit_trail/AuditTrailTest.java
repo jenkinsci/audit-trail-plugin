@@ -33,8 +33,8 @@ import java.util.regex.Pattern;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 /**
- * Test interaction of audit-trail plugin with Hudson core.
- * @author Alan.Harder@sun.com
+ * Test interaction of audit-trail plugin with Jenkins core.
+ * @author Alan Harder
  */
 public class AuditTrailTest extends HudsonTestCase {
 

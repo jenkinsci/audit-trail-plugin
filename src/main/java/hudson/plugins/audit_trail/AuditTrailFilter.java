@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
+ * @author Alan Harder
  */
 public class AuditTrailFilter implements Filter {
 
