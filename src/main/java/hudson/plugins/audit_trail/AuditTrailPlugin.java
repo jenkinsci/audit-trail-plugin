@@ -38,6 +38,7 @@ import hudson.model.listeners.RunListener;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -59,7 +60,7 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
-    private String log = "", pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
+    private String log, pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
       + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline)";
     private int limit = 1, count = 1;
     private boolean logBuildCause = true;
@@ -71,6 +72,8 @@ public class AuditTrailPlugin extends Plugin {
     public boolean getLogBuildCause() { return logBuildCause; }
 
     @Override public void start() throws Exception {
+        // Set a default value; will be overridden by load() once customized:
+        log = Hudson.getInstance().getRootDir().getAbsolutePath() + File.separatorChar + "audit.log";
         load();
         applySettings();
 
