@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2009, Sun Microsystems, Inc., Alan Harder
+ * Copyright (c) 2004-2011, Sun Microsystems, Inc., Alan Harder
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,8 @@ public class AuditTrailFilter implements Filter {
         String uri = ((HttpServletRequest)req).getRequestURI();
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
-            String username = user != null ? user.getId() : "?", extra = "";
+            String username = user != null ? user.getId() : req.getRemoteAddr(),
+                   extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) try {
                 extra = " (" + Hudson.getInstance().getQueue().getItem(Integer.parseInt(
