@@ -201,7 +201,7 @@ public class AuditTrailPlugin extends Plugin {
         }
         catch (Exception ex) {
             return FormValidation.errorWithMarkup("Invalid <a href=\""
-                + "http://java.sun.com/j2se/1.5.0/docs/api/java/util/regex/Pattern.html"
+                + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
                 + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
