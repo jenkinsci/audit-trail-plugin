@@ -51,6 +51,7 @@ import java.util.logging.Formatter;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -86,7 +87,8 @@ public class AuditTrailPlugin extends Plugin {
         new Thread() {
             @Override public void run() {
                 try { Thread.sleep(20000); } catch (InterruptedException ex) { }
-                SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
+                SecurityContext old = ACL.impersonate(ACL.SYSTEM);
+                try {
                 LogRecorderManager lrm = Hudson.getInstance().getLog();
                 if (!lrm.logRecorders.containsKey("Audit Trail")) {
                     LogRecorder logRecorder = new LogRecorder("Audit Trail");
@@ -95,7 +97,9 @@ public class AuditTrailPlugin extends Plugin {
                     try { logRecorder.save(); } catch (Exception ex) { }
                     lrm.logRecorders.put("Audit Trail", logRecorder);
                 }
-                SecurityContextHolder.clearContext();
+                } finally {
+                    SecurityContextHolder.setContext(old);
+                }
             }
         }.start();
     }
