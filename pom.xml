@@ -13,18 +13,25 @@
     <version>1.9-SNAPSHOT</version>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Audit+Trail+Plugin</url>
 
-    <developers>
-      <developer>
-        <id>mindless</id>
-        <name>Alan Harder</name>
-      </developer>
-    </developers>
-
     <scm>
       <connection>scm:git:git://github.com/jenkinsci/audit-trail-plugin.git</connection>
       <developerConnection>scm:git:git@github.com:jenkinsci/audit-trail-plugin.git</developerConnection>
       <url>https://github.com/jenkinsci/audit-trail-plugin</url>
     </scm>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>1.99</version>
+                <configuration>
+                    <!-- TODO delete once 1.506+; for better testing: -->
+                    <contextPath>/jenkins</contextPath>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <repositories>
         <repository>
