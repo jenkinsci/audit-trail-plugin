@@ -50,7 +50,7 @@ public class AuditTrailFilter implements Filter {
 
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        String uri = ((HttpServletRequest)req).getRequestURI();
+        String uri = ((HttpServletRequest)req).getPathInfo();
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null ? user.getId() : req.getRemoteAddr(),
