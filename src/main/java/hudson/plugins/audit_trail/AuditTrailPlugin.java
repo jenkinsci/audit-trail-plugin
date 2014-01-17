@@ -61,7 +61,7 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
-    private String log, pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
+    private String log, pattern = ".*/(?:configSubmit|doDelete|postBuildResult|enable|disable|"
       + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline)";
     private int limit = 1, count = 1;
     private boolean logBuildCause = true;
