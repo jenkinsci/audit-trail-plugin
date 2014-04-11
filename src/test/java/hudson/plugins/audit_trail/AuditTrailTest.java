@@ -24,6 +24,7 @@
 package hudson.plugins.audit_trail;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.Util;
 import hudson.model.Cause.UserCause;
 import hudson.model.FreeStyleProject;
@@ -42,16 +43,20 @@ public class AuditTrailTest extends HudsonTestCase {
         // Configure plugin
         File tmpDir = createTmpDir(), logFile = new File(tmpDir, "test.log");
         WebClient wc = new WebClient();
-        HtmlForm form = wc.goTo("configure").getFormByName("config");
-        form.getInputByName("log").setValueAttribute(logFile.getPath());
-        form.getInputByName("limit").setValueAttribute("1");
-        form.getInputByName("count").setValueAttribute("2");
+        HtmlPage configure = wc.goTo("configure");
+        HtmlForm form = configure.getFormByName("config");
+        form.getButtonByCaption("Add Logger").click();
+        configure.getAnchorByText("Log file").click();
+        form.getInputByName("_.log").setValueAttribute(logFile.getPath());
+        form.getInputByName("_.limit").setValueAttribute("1");
+        form.getInputByName("_.count").setValueAttribute("2");
         submit(form);
 
         AuditTrailPlugin plugin = Hudson.getInstance().getPlugin(AuditTrailPlugin.class);
-        assertEquals("log path", logFile.getPath(), plugin.getLog());
-        assertEquals("log size", 1, plugin.getLimit());
-        assertEquals("log count", 2, plugin.getCount());
+        LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
+        assertEquals("log path", logFile.getPath(), logger.getLog());
+        assertEquals("log size", 1, logger.getLimit());
+        assertEquals("log count", 2, logger.getCount());
         assertTrue("log build cause", plugin.getLogBuildCause());
 
         // Perform a couple actions to be logged
