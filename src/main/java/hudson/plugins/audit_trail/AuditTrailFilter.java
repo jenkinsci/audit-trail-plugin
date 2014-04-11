@@ -25,6 +25,8 @@ package hudson.plugins.audit_trail;
 
 import hudson.model.Hudson;
 import hudson.model.User;
+import jenkins.model.Jenkins;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -36,6 +38,8 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import static hudson.plugins.audit_trail.AuditLogger.Category.WEB;
+
 /**
  * Servlet filter to watch requests and log those we are interested in.
  * @author Alan Harder
@@ -43,7 +47,12 @@ import java.util.regex.Pattern;
 public class AuditTrailFilter implements Filter {
 
     static Pattern uriPattern = null;
-    static Logger LOG = Logger.getLogger(AuditTrailFilter.class.getName());
+
+    private final AuditTrailPlugin plugin;
+
+    public AuditTrailFilter(AuditTrailPlugin plugin) {
+        this.plugin = plugin;
+    }
 
     public void init(FilterConfig fc) {
     }
@@ -61,7 +70,7 @@ public class AuditTrailFilter implements Filter {
                         uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
             } catch (Exception ignore) { }
 
-            LOG.config(uri + extra + " by " + username);
+            plugin.onRequest(uri, extra, username);
         }
         chain.doFilter(req, res);
     }

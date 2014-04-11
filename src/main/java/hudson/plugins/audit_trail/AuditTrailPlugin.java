@@ -23,54 +23,51 @@
  */
 package hudson.plugins.audit_trail;
 
-import hudson.Extension;
+import hudson.DescriptorExtensionList;
 import hudson.Plugin;
-import hudson.logging.LogRecorder;
-import hudson.logging.LogRecorderManager;
-import hudson.logging.WeakLogHandler;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Hudson;
 import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.model.listeners.RunListener;
-import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.LogRecord;
-import java.util.logging.Formatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
+
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+
+import static hudson.plugins.audit_trail.AuditLogger.Category.*;
 
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
  * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
-    private String log, pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
+    private String pattern = ".*/(?:configSubmit|doDelete|postBuildResult|"
       + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline)";
-    private int limit = 1, count = 1;
     private boolean logBuildCause = true;
 
-    public String getLog() { return log; }
-    public int getLimit() { return limit; }
-    public int getCount() { return count; }
+    private List<AuditLogger> loggers = new ArrayList<AuditLogger>();
+
+    private transient boolean started;
+
+    private transient String log;
+    private transient int limit = 1, count = 1;
+
     public String getPattern() { return pattern; }
     public boolean getLogBuildCause() { return logBuildCause; }
+    public List<AuditLogger> getLoggers() { return loggers; }
 
     @Override public void start() throws Exception {
         // Set a default value; will be overridden by load() once customized:
@@ -79,41 +76,23 @@ public class AuditTrailPlugin extends Plugin {
         applySettings();
 
         // Add Filter to watch all requests and log matching ones
-        PluginServletFilter.addFilter(new AuditTrailFilter());
-    }
-
-    @Override public void postInitialize() {
-        // Add LogRecorder if not already configured.. but wait for Jenkins to initialize:
-        new Thread() {
-            @Override public void run() {
-                try { Thread.sleep(20000); } catch (InterruptedException ex) { }
-                SecurityContext old = ACL.impersonate(ACL.SYSTEM);
-                try {
-                LogRecorderManager lrm = Hudson.getInstance().getLog();
-                if (!lrm.logRecorders.containsKey("Audit Trail")) {
-                    LogRecorder logRecorder = new LogRecorder("Audit Trail");
-                    logRecorder.targets.add(
-                        new LogRecorder.Target(AuditTrailFilter.class.getPackage().getName(), Level.CONFIG));
-                    try { logRecorder.save(); } catch (Exception ex) { }
-                    lrm.logRecorders.put("Audit Trail", logRecorder);
-                }
-                } finally {
-                    SecurityContextHolder.setContext(old);
-                }
-            }
-        }.start();
+        PluginServletFilter.addFilter(new AuditTrailFilter(this));
     }
 
     @Override public void configure(StaplerRequest req, JSONObject formData)
             throws IOException, ServletException, FormException {
-        log = formData.optString("log");
-        limit = formData.optInt("limit", 1);
-        count = formData.optInt("count", 1);
         pattern = formData.optString("pattern");
         logBuildCause = formData.optBoolean("logBuildCause", true);
+        loggers = Descriptor.newInstancesFromHeteroList(
+                req, formData, "loggers", getLoggerDescriptors());
         save();
         applySettings();
     }
+
+    public DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> getLoggerDescriptors() {
+        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
+    }
+
 
     private void applySettings() {
         try {
@@ -121,76 +100,46 @@ public class AuditTrailPlugin extends Plugin {
         }
         catch (Exception ex) { ex.printStackTrace(); }
 
-        LISTENER.setActive(logBuildCause);
-
-        Logger logger = Logger.getLogger(AuditTrailFilter.class.getPackage().getName());
-        for (Handler handler : logger.getHandlers()) {
-            logger.removeHandler(handler);
-            handler.close();
+        for (AuditLogger logger : loggers) {
+            logger.configure();
         }
-        if (log != null && log.length() > 0) try {
-            FileHandler handler = new FileHandler(log, limit * 1024 * 1024, count, true);
-            handler.setLevel(Level.CONFIG);
-            handler.setFormatter(new Formatter() {
-                SimpleDateFormat dateformat = new SimpleDateFormat("MMM d, yyyy h:mm:ss aa ");
-                public synchronized String format(LogRecord record) {
-                    return dateformat.format(new Date(record.getMillis()))
-                           + record.getMessage() + '\n';
-                }
-            });
-            logger.setLevel(Level.CONFIG);
-            logger.addHandler(handler);
-            // Workaround for SJSWS logging.. no need for audit trail to appear in logs/errors
-            // since we have our own log file, BUT this handler ignores its level setting and
-            // logs anything it receives.  So don't use parent handlers..
-            logger.setUseParentHandlers(false);
-            // ..but Jenkins' LogRecorders run via a handler on the root logger so we'll
-            // route messages directly to that handler..
-            logger.addHandler(new RouteToJenkinsHandler());
-        }
-        catch (IOException ex) { ex.printStackTrace(); }
+        started = true;
     }
 
-    private static class RouteToJenkinsHandler extends Handler {
-        public void publish(LogRecord record) {
-            for (Handler handler : Logger.getLogger("").getHandlers()) {
-                if (handler instanceof WeakLogHandler) {
-                    handler.publish(record);
+    /* package */ void onStarted(Run run) {
+        if (this.started) {
+            StringBuilder buf = new StringBuilder(100);
+            for (CauseAction action : run.getActions(CauseAction.class)) {
+                for (Cause cause : action.getCauses()) {
+                    if (buf.length() > 0) buf.append(", ");
+                    buf.append(cause.getShortDescription());
                 }
             }
+            if (buf.length() == 0) buf.append("Started");
+
+            for (AuditLogger logger : loggers) {
+                logger.log(RUN, run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
+            }
+
         }
-        public void flush() { }
-        public void close() { }
     }
 
-    @Extension public static final AuditTrailRunListener LISTENER = new AuditTrailRunListener();
-
-    public static class AuditTrailRunListener extends RunListener<Run> {
-        private boolean active = false;
-        private Logger LOG = Logger.getLogger(AuditTrailRunListener.class.getName());
-
-        private AuditTrailRunListener() {
-            super(Run.class);
-        }
-
-        private void setActive(boolean active) {
-            this.active = active;
-        }
-
-        @Override
-        public void onStarted(Run run, TaskListener listener) {
-            if (this.active) {
-                StringBuilder buf = new StringBuilder(100);
-                for (CauseAction action : run.getActions(CauseAction.class)) {
-                    for (Cause cause : action.getCauses()) {
-                        if (buf.length() > 0) buf.append(", ");
-                        buf.append(cause.getShortDescription());
-                    }
-                }
-                if (buf.length() == 0) buf.append("Started");
-                LOG.config(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
+    /* package */ void onRequest(String uri, String extra, String username) {
+        if (this.started) {
+            for (AuditLogger logger : loggers) {
+                logger.log(WEB, uri + extra + " by " + username);
             }
         }
+    }
+
+
+
+    private Object readResolve() {
+        if (log != null) {
+            loggers = new ArrayList<AuditLogger>();
+            loggers.add(new LogFileAuditLogger(log, limit, count));
+        }
+        return this;
     }
 
     /**
@@ -209,4 +158,5 @@ public class AuditTrailPlugin extends Plugin {
                 + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
+
 }
