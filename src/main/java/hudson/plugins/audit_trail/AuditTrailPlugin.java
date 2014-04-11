@@ -25,8 +25,6 @@ package hudson.plugins.audit_trail;
 
 import hudson.DescriptorExtensionList;
 import hudson.Plugin;
-import hudson.init.InitMilestone;
-import hudson.init.Initializer;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Descriptor;
@@ -46,8 +44,6 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import static hudson.plugins.audit_trail.AuditLogger.Category.*;
 
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
@@ -118,7 +114,7 @@ public class AuditTrailPlugin extends Plugin {
             if (buf.length() == 0) buf.append("Started");
 
             for (AuditLogger logger : loggers) {
-                logger.log(RUN, run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
+                logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
             }
 
         }
@@ -127,7 +123,7 @@ public class AuditTrailPlugin extends Plugin {
     /* package */ void onRequest(String uri, String extra, String username) {
         if (this.started) {
             for (AuditLogger logger : loggers) {
-                logger.log(WEB, uri + extra + " by " + username);
+                logger.log(uri + extra + " by " + username);
             }
         }
     }

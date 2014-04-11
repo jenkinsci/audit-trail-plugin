@@ -12,12 +12,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
 
     public abstract void configure();
 
-    public abstract void log(Category category, String event);
-
-    public static enum Category {
-        WEB,
-        RUN
-    }
+    public abstract void log(String event);
 
     public Descriptor getDescriptor() {
         return Jenkins.getInstance().getDescriptorOrDie(getClass());

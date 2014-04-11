@@ -1,16 +1,7 @@
 package hudson.plugins.audit_trail;
 
 import hudson.Extension;
-import hudson.init.InitMilestone;
-import hudson.init.Initializer;
-import hudson.logging.LogRecorder;
-import hudson.logging.LogRecorderManager;
-import hudson.logging.WeakLogHandler;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.security.ACL;
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -18,10 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 import static java.util.logging.Level.CONFIG;
 
@@ -40,7 +28,7 @@ public class LogFileAuditLogger extends AuditLogger {
     }
 
     @Override
-    public void log(Category category, String event) {
+    public void log(String event) {
         if (handler == null) return;
         handler.publish(new LogRecord(CONFIG, event));
     }
