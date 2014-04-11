@@ -25,7 +25,6 @@ package hudson.plugins.audit_trail;
 
 import hudson.model.Hudson;
 import hudson.model.User;
-import jenkins.model.Jenkins;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -35,10 +34,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static hudson.plugins.audit_trail.AuditLogger.Category.WEB;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
