@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.466</version>
+        <version>1.520</version>
     </parent>
 
     <artifactId>audit-trail</artifactId>
@@ -19,16 +19,26 @@
       <url>https://github.com/jenkinsci/audit-trail-plugin</url>
     </scm>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.cloudbees</groupId>
+            <artifactId>syslog-java-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>2.0.1</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.99</version>
-                <configuration>
-                    <!-- TODO delete once 1.506+; for better testing: -->
-                    <contextPath>/jenkins</contextPath>
-                </configuration>
+                <version>1.106</version>
             </plugin>
         </plugins>
     </build>
