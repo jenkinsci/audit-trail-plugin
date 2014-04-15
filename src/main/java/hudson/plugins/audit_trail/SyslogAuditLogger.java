@@ -25,6 +25,8 @@ import java.util.logging.*;
 import static java.util.logging.Level.CONFIG;
 
 /**
+ * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/SyslogAuditLogger/config.jelly</code>
+ *
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class SyslogAuditLogger extends AuditLogger {
@@ -36,11 +38,11 @@ public class SyslogAuditLogger extends AuditLogger {
 
     private transient SyslogMessageSender syslogMessageSender;
     private String syslogServerHostname;
-    private int syslogServerPort = DEFAULT_SYSLOG_SERVER_PORT;
-    private String appName = DEFAULT_APP_NAME;
+    private int syslogServerPort;
+    private String appName;
     private String messageHostname;
-    private Facility facility = DEFAULT_FACILITY;
-    private MessageFormat messageFormat = DEFAULT_MESSAGE_FORMAT;
+    private Facility facility;
+    private MessageFormat messageFormat;
 
 
     @DataBoundConstructor
@@ -49,7 +51,7 @@ public class SyslogAuditLogger extends AuditLogger {
                              String facility, String messageFormat) {
         this.syslogServerHostname = trimToNull(syslogServerHostname);
         this.syslogServerPort = defaultValue(syslogServerPort, DEFAULT_SYSLOG_SERVER_PORT);
-        this.appName = trimToNull(appName);
+        this.appName = defaultValue(trimToNull(appName), DEFAULT_APP_NAME);
         this.messageHostname = trimToNull(messageHostname);
         this.facility = defaultValue(Facility.fromLabel(trimToNull(facility)), DEFAULT_FACILITY);
         this.messageFormat = MessageFormat.valueOf(defaultValue(trimToNull(messageFormat), DEFAULT_MESSAGE_FORMAT.toString()));
@@ -59,9 +61,11 @@ public class SyslogAuditLogger extends AuditLogger {
     public void log(String event) {
 
         if (syslogMessageSender == null) {
-            LOGGER.log(Level.FINER, "skip log %s, syslogMessageSender not configured", event);
+            LOGGER.log(Level.FINER, "skip log {0}, syslogMessageSender not configured", event);
             return;
         }
+        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to syslog server {1}", new Object[]{event, syslogMessageSender});
+
         try {
             syslogMessageSender.sendMessage(event);
         } catch (IOException e) {
@@ -85,7 +89,7 @@ public class SyslogAuditLogger extends AuditLogger {
         ((UdpSyslogMessageSender) syslogMessageSender).setDefaultMessageHostname(messageHostname);
         ((UdpSyslogMessageSender) syslogMessageSender).setDefaultFacility(facility);
 
-        LOGGER.log(Level.FINE, "SyslogAuditLogger: %s", this);
+        LOGGER.log(Level.FINE, "SyslogAuditLogger: {0}", this);
     }
 
     public String getDisplayName() {
@@ -109,7 +113,6 @@ public class SyslogAuditLogger extends AuditLogger {
     }
 
     public String getFacility() {
-        new Exception("getFacility():" + facility).printStackTrace();
         return facility == null ? null : facility.label();
     }
 
