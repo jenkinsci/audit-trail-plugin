@@ -34,6 +34,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 
@@ -42,6 +44,8 @@ import java.util.regex.Pattern;
  * @author Alan Harder
  */
 public class AuditTrailFilter implements Filter {
+
+    protected final Logger LOGGER = Logger.getLogger(getClass().getName());
 
     static Pattern uriPattern = null;
 
@@ -68,7 +72,13 @@ public class AuditTrailFilter implements Filter {
                         uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
             } catch (Exception ignore) { }
 
+            if(LOGGER.isLoggable(Level.FINE))
+                LOGGER.log(Level.FINER, "Audit request {0} by user {1}", new Object[]{uri, username});
+
             plugin.onRequest(uri, extra, username);
+        } else {
+            if(LOGGER.isLoggable(Level.FINEST))
+                LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
         }
         chain.doFilter(req, res);
     }
