@@ -1,0 +1,12 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry field="output" title="${%Output}">
+        <f:select default="STD_OUT"/>
+    </f:entry>
+    <f:advanced>
+        <f:entry title="${%Date Format}" field="dateFormat">
+            <f:textbox default="yyyy/MM/dd MM:ss:SSS"/>
+        </f:entry>
+    </f:advanced>
+
+</j:jelly>
