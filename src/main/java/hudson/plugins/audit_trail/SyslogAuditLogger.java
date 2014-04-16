@@ -3,26 +3,19 @@ package hudson.plugins.audit_trail;
 import com.cloudbees.syslog.Facility;
 import com.cloudbees.syslog.MessageFormat;
 import com.cloudbees.syslog.Severity;
-import com.cloudbees.syslog.integration.jul.SyslogHandler;
 import com.cloudbees.syslog.integration.jul.util.LevelHelper;
 import com.cloudbees.syslog.sender.SyslogMessageSender;
 import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.logging.*;
-
-import static java.util.logging.Level.CONFIG;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/SyslogAuditLogger/config.jelly</code>
@@ -122,6 +115,36 @@ public class SyslogAuditLogger extends AuditLogger {
 
     public String getNetworkProtocol() {
         return "UDP";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SyslogAuditLogger)) return false;
+
+        SyslogAuditLogger that = (SyslogAuditLogger) o;
+
+        if (syslogServerPort != that.syslogServerPort) return false;
+        if (appName != null ? !appName.equals(that.appName) : that.appName != null) return false;
+        if (facility != that.facility) return false;
+        if (messageFormat != that.messageFormat) return false;
+        if (messageHostname != null ? !messageHostname.equals(that.messageHostname) : that.messageHostname != null)
+            return false;
+        if (syslogServerHostname != null ? !syslogServerHostname.equals(that.syslogServerHostname) : that.syslogServerHostname != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = syslogServerHostname != null ? syslogServerHostname.hashCode() : 0;
+        result = 31 * result + syslogServerPort;
+        result = 31 * result + (appName != null ? appName.hashCode() : 0);
+        result = 31 * result + (messageHostname != null ? messageHostname.hashCode() : 0);
+        result = 31 * result + (facility != null ? facility.hashCode() : 0);
+        result = 31 * result + (messageFormat != null ? messageFormat.hashCode() : 0);
+        return result;
     }
 
     @Override

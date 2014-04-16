@@ -43,7 +43,27 @@ public class LogFileAuditLogger extends AuditLogger {
 
     public int getCount() { return count; }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LogFileAuditLogger)) return false;
 
+        LogFileAuditLogger that = (LogFileAuditLogger) o;
+
+        if (count != that.count) return false;
+        if (limit != that.limit) return false;
+        if (log != null ? !log.equals(that.log) : that.log != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = log != null ? log.hashCode() : 0;
+        result = 31 * result + limit;
+        result = 31 * result + count;
+        return result;
+    }
 
     @Override
     public void configure() {

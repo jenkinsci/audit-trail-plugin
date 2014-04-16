@@ -129,11 +129,18 @@ public class AuditTrailPlugin extends Plugin {
     }
 
 
-
+    /**
+     * Backward compatibility
+     */
     private Object readResolve() {
         if (log != null) {
-            loggers = new ArrayList<AuditLogger>();
-            loggers.add(new LogFileAuditLogger(log, limit, count));
+            if (loggers == null) {
+                loggers = new ArrayList<AuditLogger>();
+            }
+            LogFileAuditLogger logger = new LogFileAuditLogger(log, limit, count);
+            if (!loggers.contains(logger))
+                loggers.add(logger);
+            log = null;
         }
         return this;
     }
