@@ -67,7 +67,6 @@ public class AuditTrailPlugin extends Plugin {
 
     @Override public void start() throws Exception {
         // Set a default value; will be overridden by load() once customized:
-        log = Hudson.getInstance().getRootDir().getAbsolutePath() + File.separatorChar + "audit.log";
         load();
         applySettings();
 
