@@ -58,10 +58,17 @@ public class AuditTrailFilter implements Filter {
     public void init(FilterConfig fc) {
     }
 
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+    public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        String uri = ((HttpServletRequest)req).getPathInfo();
-        uri = (uri == null) ? "/" : uri;
+        HttpServletRequest req = (HttpServletRequest) request;
+        String uri;
+        if (req.getPathInfo() == null) {
+            // workaround: on some containers such as CloudBees DEV@cloud, req.getPathInfo() is unexpectedly null,
+            // construct pathInfo based on contextPath and requestUri
+            uri = req.getRequestURI().substring(req.getContextPath().length());
+        } else {
+            uri = req.getPathInfo();
+        }
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null ? user.getId() : req.getRemoteAddr(),
@@ -73,12 +80,11 @@ public class AuditTrailFilter implements Filter {
             } catch (Exception ignore) { }
 
             if(LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINER, "Audit request {0} by user {1}", new Object[]{uri, username});
+                LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
 
             plugin.onRequest(uri, extra, username);
         } else {
-            if(LOGGER.isLoggable(Level.FINEST))
-                LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
+            LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
         }
         chain.doFilter(req, res);
     }
