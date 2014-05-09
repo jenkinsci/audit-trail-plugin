@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 
 /**
@@ -45,9 +46,9 @@ import java.util.regex.Pattern;
  */
 public class AuditTrailFilter implements Filter {
 
-    protected final Logger LOGGER = Logger.getLogger(getClass().getName());
+    private static final Logger LOGGER = Logger.getLogger(AuditTrailFilter.class.getName());
 
-    static Pattern uriPattern = null;
+    private static Pattern uriPattern = null;
 
     private final AuditTrailPlugin plugin;
 
@@ -56,6 +57,11 @@ public class AuditTrailFilter implements Filter {
     }
 
     public void init(FilterConfig fc) {
+    }
+
+    static void setPattern(String pattern) throws PatternSyntaxException {
+        uriPattern = Pattern.compile(pattern);
+        LOGGER.log(Level.FINE, "set pattern to {0}", pattern);
     }
 
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)

@@ -29,15 +29,14 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Descriptor;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Hudson;
 import hudson.model.Run;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
@@ -91,9 +90,9 @@ public class AuditTrailPlugin extends Plugin {
 
     private void applySettings() {
         try {
-            AuditTrailFilter.uriPattern = Pattern.compile(pattern);
+            AuditTrailFilter.setPattern(pattern);
         }
-        catch (Exception ex) { ex.printStackTrace(); }
+        catch (PatternSyntaxException ex) { ex.printStackTrace(); }
 
         for (AuditLogger logger : loggers) {
             logger.configure();

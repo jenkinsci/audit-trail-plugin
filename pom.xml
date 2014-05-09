@@ -39,6 +39,11 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>1.106</version>
+                <configuration>
+                    <loggers>
+                        <hudson.plugins.audit_trail>FINE</hudson.plugins.audit_trail>
+                    </loggers>
+                </configuration>
             </plugin>
         </plugins>
     </build>
