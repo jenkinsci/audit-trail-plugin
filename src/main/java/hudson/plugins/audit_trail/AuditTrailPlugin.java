@@ -25,11 +25,8 @@ package hudson.plugins.audit_trail;
 
 import hudson.DescriptorExtensionList;
 import hudson.Plugin;
-import hudson.model.Cause;
-import hudson.model.CauseAction;
-import hudson.model.Descriptor;
+import hudson.model.*;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Run;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
 import java.io.IOException;
@@ -113,6 +110,36 @@ public class AuditTrailPlugin extends Plugin {
 
             for (AuditLogger logger : loggers) {
                 logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
+            }
+
+        }
+    }
+
+    public void onFinalized(Run run) {
+        if (run instanceof AbstractBuild) {
+            onFinalized((AbstractBuild) run);
+        }
+
+    }
+    public void onFinalized(AbstractBuild build) {
+        if (this.started) {
+            StringBuilder causeBuilder = new StringBuilder(100);
+            for (CauseAction action : build.getActions(CauseAction.class)) {
+                for (Cause cause : action.getCauses()) {
+                    if (causeBuilder.length() > 0) causeBuilder.append(", ");
+                    causeBuilder.append(cause.getShortDescription());
+                }
+            }
+            if (causeBuilder.length() == 0) causeBuilder.append("Started");
+
+            for (AuditLogger logger : loggers) {
+                String message = build.getFullDisplayName() +
+                        " " + causeBuilder.toString() +
+                        " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
+                        " started at " + build.getTimestampString2() +
+                        " completed in " + build.getDuration() + "ms" +
+                        " completed: " + build.getResult();
+                logger.log(message);
             }
 
         }
