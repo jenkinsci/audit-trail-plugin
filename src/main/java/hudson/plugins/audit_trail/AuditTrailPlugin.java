@@ -41,6 +41,14 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import io.searchbox.client.JestClient;
+import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.config.HttpClientConfig;
+import io.searchbox.core.Index;
+import io.searchbox.indices.CreateIndex;
+import io.searchbox.indices.IndicesExists;
+import java.util.LinkedHashMap;
+import java.util.Map;
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
  * @author Alan Harder
@@ -57,6 +65,7 @@ public class AuditTrailPlugin extends Plugin {
 
     private transient String log;
     private transient int limit = 1, count = 1;
+    private transient String elasticsearch;
 
     public String getPattern() { return pattern; }
     public boolean getLogBuildCause() { return logBuildCause; }
@@ -124,6 +133,7 @@ public class AuditTrailPlugin extends Plugin {
     }
     public void onFinalized(AbstractBuild build) {
         if (this.started) {
+        	String esUrl=null;
             StringBuilder causeBuilder = new StringBuilder(100);
             for (CauseAction action : build.getActions(CauseAction.class)) {
                 for (Cause cause : action.getCauses()) {
@@ -141,6 +151,19 @@ public class AuditTrailPlugin extends Plugin {
                         " completed in " + build.getDuration() + "ms" +
                         " completed: " + build.getResult();
                 logger.log(message);
+                
+                if(logger instanceof LogFileAuditLogger){
+                	esUrl=null;
+                	esUrl=((LogFileAuditLogger)logger).getElasticsearch();
+                	if(null != esUrl){
+						try {
+							postData(esUrl, message);
+						} catch (Exception e) {
+							//Only Handling Purpose
+							//Do not want to break existing functionality.
+						}
+                	}
+                }
             }
 
         }
@@ -163,7 +186,7 @@ public class AuditTrailPlugin extends Plugin {
             if (loggers == null) {
                 loggers = new ArrayList<AuditLogger>();
             }
-            LogFileAuditLogger logger = new LogFileAuditLogger(log, limit, count);
+            LogFileAuditLogger logger = new LogFileAuditLogger(log, limit, count, elasticsearch);
             if (!loggers.contains(logger))
                 loggers.add(logger);
             log = null;
@@ -187,5 +210,29 @@ public class AuditTrailPlugin extends Plugin {
                 + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
-
+    
+    
+   private void postData(String url, String message) throws IOException{
+	   
+	   JestClientFactory factory = new JestClientFactory();
+       factory.setHttpClientConfig(new HttpClientConfig.Builder(url)
+               .multiThreaded(true)
+               .build());
+       JestClient client = factory.getObject();
+       
+       boolean indexExists = client.execute(new IndicesExists.Builder("jenkinsaudit").build()).isSucceeded();
+       
+       if (!indexExists) {
+    	   client.execute(new CreateIndex.Builder("jenkinsaudit").build());
+       }
+      
+       Map<String, String> source = new LinkedHashMap<String,String>();
+       source.put("message", message);
+       
+       Index index = new Index.Builder(source).index("jenkinsaudit").type("localJenkins").build();
+       client.execute(index);
+       
+       
+    }
+   
 }

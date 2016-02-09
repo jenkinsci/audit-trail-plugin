@@ -8,4 +8,7 @@
     <f:entry title="${%Log File Count}" field="count">
       <f:textbox />
     </f:entry>
+     <f:entry title="${%Elastic Search Url}" field="elasticsearch">
+      <f:textbox />
+    </f:entry>
 </j:jelly>

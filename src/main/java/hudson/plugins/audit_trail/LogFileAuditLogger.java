@@ -19,12 +19,14 @@ import static java.util.logging.Level.CONFIG;
 public class LogFileAuditLogger extends AuditLogger {
 
     private transient FileHandler handler;
+    private String elasticsearch;
 
     @DataBoundConstructor
-    public LogFileAuditLogger(String log, int limit, int count) {
+    public LogFileAuditLogger(String log, int limit, int count, String elasticsearch) {
         this.log = log;
         this.limit = limit;
         this.count = count;
+        this.elasticsearch=elasticsearch;
     }
 
     @Override
@@ -42,6 +44,8 @@ public class LogFileAuditLogger extends AuditLogger {
     public int getLimit() { return limit; }
 
     public int getCount() { return count; }
+    
+    public String getElasticsearch() { return elasticsearch; }
 
     @Override
     public boolean equals(Object o) {
