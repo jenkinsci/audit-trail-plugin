@@ -27,8 +27,7 @@ public class ConsoleAuditLogger extends AuditLogger {
             throw new NullPointerException("output can not be null");
         if(dateFormat == null)
             throw new NullPointerException("dateFormat can not be null");
-        System.out.println("PREFIX");
-        System.out.println(prefixName);
+        
         if (prefixName == null || prefixName.equals("")) {
             prefix = " - ";
         } else {
