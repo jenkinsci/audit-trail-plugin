@@ -7,6 +7,9 @@
         <f:entry title="${%Date Format}" field="dateFormat">
             <f:textbox default="yyyy/MM/dd MM:ss:SSS"/>
         </f:entry>
+        <f:entry title="${%Log Prefix}" field="prefixName">
+            <f:textbox default=""/>
+        </f:entry>
     </f:advanced>
 
 </j:jelly>
