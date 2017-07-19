@@ -19,21 +19,17 @@ public class ConsoleAuditLogger extends AuditLogger {
     private final PrintStream out;
     private final String dateFormat;
     private final SimpleDateFormat sdf;
-    private final String prefix;
-
+    private final String logPrefix;
+    private String logPrefixPadded;
+    
     @DataBoundConstructor
-    public ConsoleAuditLogger(Output output, String dateFormat, String prefixName) {
+    public ConsoleAuditLogger(Output output, String dateFormat, String logPrefix) {
         if (output == null)
             throw new NullPointerException("output can not be null");
         if(dateFormat == null)
             throw new NullPointerException("dateFormat can not be null");
         
-        if (prefixName == null || prefixName.equals("")) {
-            prefix = " - ";
-        } else {
-            prefix = String.format(" - %s - ", prefixName);
-        }
-                
+        this.logPrefix = logPrefix;
         this.output = output;
         switch (output) {
             case STD_ERR:
@@ -52,7 +48,7 @@ public class ConsoleAuditLogger extends AuditLogger {
     @Override
     public void log(String event) {
         synchronized (sdf) {
-            this.out.println(sdf.format(new Date()) + this.prefix + event);
+            this.out.println(sdf.format(new Date()) + this.getLogPrefixPadded() + event);
         }
     }
 
@@ -69,8 +65,20 @@ public class ConsoleAuditLogger extends AuditLogger {
         return this.dateFormat;
     }
     
-    public String getPrefix() {return this.prefix;}
-
+    public String getLogPrefix() {return this.logPrefix;}
+    
+    private Boolean hasLogPrefix() {return this.logPrefix != null && !this.logPrefix.equals("");}
+    
+    private String getLogPrefixPadded() {
+        if (hasLogPrefix()) {
+            if (logPrefixPadded == null)
+                logPrefixPadded = String.format(" - %s - ", getLogPrefix());
+            return logPrefixPadded;
+        }
+        
+        return " - ";
+    }
+    
     @Extension
     public static class DescriptorImpl extends Descriptor<AuditLogger> {
 
@@ -98,7 +106,7 @@ public class ConsoleAuditLogger extends AuditLogger {
 
         if (!dateFormat.equals(that.dateFormat)) return false;
         if (output != that.output) return false;
-        if (!prefix.equals(that.prefix)) return false;
+        if (!logPrefix.equals(that.logPrefix)) return false;
         
         return true;
     }
@@ -107,7 +115,7 @@ public class ConsoleAuditLogger extends AuditLogger {
     public int hashCode() {
         int result = output.hashCode();
         result = 31 * result + dateFormat.hashCode();
-        result = 31 * result + prefix.hashCode();
+        result = 31 * result + logPrefix.hashCode();
         return result;
     }
 }
