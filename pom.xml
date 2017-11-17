@@ -1,25 +1,22 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>1.520</version>
     </parent>
-
     <artifactId>audit-trail</artifactId>
     <packaging>hpi</packaging>
     <name>Audit Trail</name>
     <version>2.3-SNAPSHOT</version>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Audit+Trail+Plugin</url>
-
     <scm>
-      <connection>scm:git:git://github.com/jenkinsci/audit-trail-plugin.git</connection>
-      <developerConnection>scm:git:git@github.com:jenkinsci/audit-trail-plugin.git</developerConnection>
-      <url>https://github.com/jenkinsci/audit-trail-plugin</url>
-      <tag>HEAD</tag>
-  </scm>
-
+        <connection>scm:git:git://github.com/jenkinsci/audit-trail-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/audit-trail-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/audit-trail-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
     <dependencies>
         <dependency>
             <groupId>com.cloudbees</groupId>
@@ -32,36 +29,55 @@
             <version>2.0.1</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>org.graylog2</groupId>
+            <artifactId>syslog4j</artifactId>
+            <version>0.9.60</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.openjpa</groupId>
+            <artifactId>openjpa-all</artifactId>
+            <version>2.1.0</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.106</version>
+                <version>2.1</version>
                 <configuration>
                     <loggers>
-                        <hudson.plugins.audit_trail>FINE</hudson.plugins.audit_trail>
+                        <hudson.plugins.audit_trail>DEBUG</hudson.plugins.audit_trail>
                     </loggers>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
     </repositories>
-
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
-</project>  
-  
-
+</project>
