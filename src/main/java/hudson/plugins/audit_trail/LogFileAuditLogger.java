@@ -19,7 +19,9 @@ import static java.util.logging.Level.CONFIG;
 public class LogFileAuditLogger extends AuditLogger {
 
     private transient FileHandler handler;
-
+    private String log;
+    private int limit = 1;
+    private int count = 1;
     @DataBoundConstructor
     public LogFileAuditLogger(String log, int limit, int count) {
         this.log = log;
@@ -33,15 +35,17 @@ public class LogFileAuditLogger extends AuditLogger {
         handler.publish(new LogRecord(CONFIG, event));
     }
 
-    private String log;
-    private int limit = 1;
-    private int count = 1;
+    public String getLog() {
+        return log;
+    }
 
-    public String getLog() { return log; }
+    public int getLimit() {
+        return limit;
+    }
 
-    public int getLimit() { return limit; }
-
-    public int getCount() { return count; }
+    public int getCount() {
+        return count;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -80,7 +84,9 @@ public class LogFileAuditLogger extends AuditLogger {
             h.setLevel(CONFIG);
             handler = h;
 
-        } catch (IOException ex) { ex.printStackTrace(); }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Extension

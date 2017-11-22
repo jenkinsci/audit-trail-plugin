@@ -13,19 +13,15 @@ import java.util.Date;
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class ConsoleAuditLogger extends AuditLogger {
-    public enum Output {STD_OUT, STD_ERR}
-
     private final Output output;
     private final PrintStream out;
     private final String dateFormat;
     private final SimpleDateFormat sdf;
-
-
     @DataBoundConstructor
     public ConsoleAuditLogger(Output output, String dateFormat) {
         if (output == null)
             throw new NullPointerException("output can not be null");
-        if(dateFormat == null)
+        if (dateFormat == null)
             throw new NullPointerException("dateFormat can not be null");
 
         this.output = output;
@@ -63,24 +59,6 @@ public class ConsoleAuditLogger extends AuditLogger {
         return this.dateFormat;
     }
 
-    @Extension
-    public static class DescriptorImpl extends Descriptor<AuditLogger> {
-
-        @Override
-        public String getDisplayName() {
-            return "Console";
-        }
-
-        public ListBoxModel doFillOutputItems() {
-            ListBoxModel items = new ListBoxModel();
-            Output[] outputs = Output.values();
-            for (Output output : outputs) {
-                items.add(output.name());
-            }
-            return items;
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -99,5 +77,25 @@ public class ConsoleAuditLogger extends AuditLogger {
         int result = output.hashCode();
         result = 31 * result + dateFormat.hashCode();
         return result;
+    }
+
+    public enum Output {STD_OUT, STD_ERR}
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<AuditLogger> {
+
+        @Override
+        public String getDisplayName() {
+            return "Console";
+        }
+
+        public ListBoxModel doFillOutputItems() {
+            ListBoxModel items = new ListBoxModel();
+            Output[] outputs = Output.values();
+            for (Output output : outputs) {
+                items.add(output.name());
+            }
+            return items;
+        }
     }
 }
