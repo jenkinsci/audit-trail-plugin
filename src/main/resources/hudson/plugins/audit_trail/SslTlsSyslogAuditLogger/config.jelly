@@ -4,7 +4,7 @@
         <f:textbox/>
     </f:entry>
     <f:entry title="${%Syslog Server Port}" field="syslogServerPort">
-        <f:number default="1999"/>
+        <f:number default="514"/>
     </f:entry>
     <f:advanced>
         <f:entry field="networkProtocol" title="${%Syslog network protocol}">
@@ -20,19 +20,19 @@
             <f:textbox/>
         </f:entry>
         <f:entry field="facility" title="${%Syslog Facility}">
-            <f:select default="USER"/>
+            <f:select default="SYSLOG"/>
         </f:entry>
         <f:entry field="keyStore" title="${%Syslog keyStore}">
-            <f:textbox default="/var/jenkins_home/clientkeystore.jks"/>
+            <f:textbox/>
         </f:entry>
         <f:entry field="keyStorePasswd" title="${%Syslog keyStorePasswd}">
-            <f:textbox default="pa55word"/>
+            <f:textbox/>
         </f:entry>
         <f:entry field="trustStore" title="${%Syslog trustStore}">
-            <f:textbox default="/var/jenkins_home/mytruststore"/>
+            <f:textbox/>
         </f:entry>
         <f:entry field="trustStorePasswd" title="${%Syslog trustStorePasswd}">
-            <f:textbox default="pa55word"/>
+            <f:textbox/>
         </f:entry>
     </f:advanced>
 </j:jelly>

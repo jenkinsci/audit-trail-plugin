@@ -4,23 +4,20 @@ import com.cloudbees.syslog.Facility;
 import com.cloudbees.syslog.MessageFormat;
 import com.cloudbees.syslog.Severity;
 import com.cloudbees.syslog.integration.jul.util.LevelHelper;
-import com.cloudbees.syslog.sender.SyslogMessageSender;
-import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/SyslogAuditLogger/config.jelly</code>
- *
- * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
+ * Default values are set in
+ * <code>../../resources/hudson.plugins.audit_trail.SslTlsSyslogAuditLogger/config.jelly</code>
  */
 public class SyslogAuditLogger extends AuditLogger {
 
@@ -28,65 +25,101 @@ public class SyslogAuditLogger extends AuditLogger {
     public static final String DEFAULT_APP_NAME = "jenkins";
     public static final Facility DEFAULT_FACILITY = Facility.USER;
     public static final MessageFormat DEFAULT_MESSAGE_FORMAT = MessageFormat.RFC_3164;
+    protected static final Logger LOGGER = Logger.getLogger(SyslogAuditLogger.class.getName());
+    private transient CdpLogger cdpLogger;
 
-    private transient SyslogMessageSender syslogMessageSender;
     private String syslogServerHostname;
     private int syslogServerPort;
     private String appName;
     private String messageHostname;
     private Facility facility;
     private MessageFormat messageFormat;
+    private String networkProtocol;
 
+    // tls-ssl
+    private String keyStore;
+    private String keyStorePasswd;
+    private String trustStore;
+    private String trustStorePasswd;
 
     @DataBoundConstructor
-    public SyslogAuditLogger(String syslogServerHostname, int syslogServerPort,
-                             String appName, String messageHostname,
-                             String facility, String messageFormat) {
+    public SyslogAuditLogger(String syslogServerHostname,
+                             int syslogServerPort,
+                             String appName,
+                             String messageHostname,
+                             String facility,
+                             String messageFormat,
+                             String networkProtocol,
+                             String keyStore,
+                             String keyStorePasswd,
+                             String trustStore,
+                             String trustStorePasswd) {
+
         this.syslogServerHostname = trimToNull(syslogServerHostname);
         this.syslogServerPort = defaultValue(syslogServerPort, DEFAULT_SYSLOG_SERVER_PORT);
         this.appName = defaultValue(trimToNull(appName), DEFAULT_APP_NAME);
         this.messageHostname = trimToNull(messageHostname);
         this.facility = defaultValue(Facility.fromLabel(trimToNull(facility)), DEFAULT_FACILITY);
         this.messageFormat = MessageFormat.valueOf(defaultValue(trimToNull(messageFormat), DEFAULT_MESSAGE_FORMAT.toString()));
+        this.networkProtocol = defaultValue(networkProtocol, "UDP");
+
+        this.keyStore = Objects.requireNonNull(keyStore, () -> null);
+        this.keyStorePasswd = Objects.requireNonNull(keyStorePasswd, () -> null);
+        this.trustStore = Objects.requireNonNull(trustStore, () -> null);
+        this.trustStorePasswd = Objects.requireNonNull(trustStorePasswd, () -> null);
+
+        try {
+            if (null != networkProtocol && "TLS".equalsIgnoreCase(networkProtocol)) {
+                this.cdpLogger = new TlsLogger(this.syslogServerHostname, this.appName, this.syslogServerPort, this.keyStore, this.trustStore, this.keyStorePasswd, this.trustStorePasswd);
+            }
+            if (null != networkProtocol && "UDP".equalsIgnoreCase(networkProtocol)) {
+                this.cdpLogger = new UdpLogger(this.syslogServerHostname, this.appName, this.syslogServerPort);
+            } else {
+                LOGGER.log(Level.WARNING, "Invalid networkProtocol defined. expected only TLS or UDP ");
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Nullable
+    public static String trimToNull(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        } else {
+            return value;
+        }
+    }
+
+    @Nullable
+    public static <T> T defaultValue(T value, T defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        } else {
+            return value;
+        }
     }
 
     @Override
     public void log(String event) {
 
-        if (syslogMessageSender == null) {
-            LOGGER.log(Level.FINER, "skip log {0}, syslogMessageSender not configured", event);
-            return;
-        }
-        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to syslog server {1}", new Object[]{event, syslogMessageSender});
-
         try {
-            syslogMessageSender.sendMessage(event);
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Exception sending audit message to syslog server " + syslogMessageSender.toString(), e);
+            LOGGER.log(Level.FINER, "Send audit message \"{0}\" to syslog server {1}", new Object[]{event, this.cdpLogger});
+            this.cdpLogger.handle(event);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Exception sending audit message to syslog server " + this.cdpLogger, e);
             LOGGER.warning(event);
         }
     }
 
     @Override
     public void configure() {
-        if (syslogServerHostname == null || syslogServerHostname.isEmpty()) {
-            LOGGER.fine("SyslogLogger not configured");
-            return;
-        }
-
-        syslogMessageSender = new UdpSyslogMessageSender();
-        ((UdpSyslogMessageSender) syslogMessageSender).setSyslogServerHostname(syslogServerHostname);
-        ((UdpSyslogMessageSender) syslogMessageSender).setSyslogServerPort(syslogServerPort);
-        ((UdpSyslogMessageSender) syslogMessageSender).setMessageFormat(messageFormat);
-        ((UdpSyslogMessageSender) syslogMessageSender).setDefaultAppName(appName);
-        ((UdpSyslogMessageSender) syslogMessageSender).setDefaultMessageHostname(messageHostname);
-        ((UdpSyslogMessageSender) syslogMessageSender).setDefaultFacility(facility);
-
-        LOGGER.log(Level.FINE, "SyslogAuditLogger: {0}", this);
     }
 
     public String getDisplayName() {
-        return "Syslog Logger";
+        return "Syslog TLS-UDP Logger";
     }
 
     public String getSyslogServerHostname() {
@@ -114,42 +147,41 @@ public class SyslogAuditLogger extends AuditLogger {
     }
 
     public String getNetworkProtocol() {
-        return "UDP";
+        return "TLS-UDP";
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof SyslogAuditLogger)) return false;
+    public boolean equals(Object thisObject) {
 
-        SyslogAuditLogger that = (SyslogAuditLogger) o;
-
-        if (syslogServerPort != that.syslogServerPort) return false;
-        if (appName != null ? !appName.equals(that.appName) : that.appName != null) return false;
-        if (facility != that.facility) return false;
-        if (messageFormat != that.messageFormat) return false;
-        if (messageHostname != null ? !messageHostname.equals(that.messageHostname) : that.messageHostname != null)
-            return false;
-        if (syslogServerHostname != null ? !syslogServerHostname.equals(that.syslogServerHostname) : that.syslogServerHostname != null)
+        if (this == thisObject)
+            return true;
+        if (thisObject == null || getClass() != thisObject.getClass())
             return false;
 
-        return true;
+        SyslogAuditLogger that = (SyslogAuditLogger) thisObject;
+
+        return Objects.equals(syslogServerPort, that.syslogServerPort) &&
+                Objects.equals(appName, that.appName) &&
+                Objects.equals(facility, that.facility) &&
+                Objects.equals(messageFormat, that.messageFormat) &&
+                Objects.equals(messageHostname, that.messageHostname) &&
+                Objects.equals(syslogServerHostname, that.syslogServerHostname) &&
+                Objects.equals(keyStore, that.keyStore) &&
+                Objects.equals(keyStorePasswd, that.keyStorePasswd) &&
+                Objects.equals(trustStore, that.trustStore) &&
+                Objects.equals(cdpLogger, that.cdpLogger) &&
+                Objects.equals(trustStorePasswd, that.trustStorePasswd);
     }
 
     @Override
     public int hashCode() {
-        int result = syslogServerHostname != null ? syslogServerHostname.hashCode() : 0;
-        result = 31 * result + syslogServerPort;
-        result = 31 * result + (appName != null ? appName.hashCode() : 0);
-        result = 31 * result + (messageHostname != null ? messageHostname.hashCode() : 0);
-        result = 31 * result + (facility != null ? facility.hashCode() : 0);
-        result = 31 * result + (messageFormat != null ? messageFormat.hashCode() : 0);
-        return result;
+        return Objects.hash(syslogServerHostname, syslogServerPort, appName, messageHostname, facility, messageFormat, keyStore, keyStorePasswd,
+                trustStore, trustStorePasswd, cdpLogger);
     }
 
     @Override
     public String toString() {
-        return "SyslogAuditLogger{" +
+        return "SyslogTlsAuditLogger{" +
                 "syslogServerHostname='" + syslogServerHostname + '\'' +
                 ", syslogServerPort=" + syslogServerPort +
                 ", appName='" + appName + '\'' +
@@ -158,34 +190,12 @@ public class SyslogAuditLogger extends AuditLogger {
                 '}';
     }
 
-    protected static final Logger LOGGER = Logger.getLogger(SyslogAuditLogger.class.getName());
-
-    @Nullable
-    public static String trimToNull(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        } else {
-            return value;
-        }
-    }
-
-    @Nullable
-    public static <T> T defaultValue(T value, T defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        } else {
-            return value;
-        }
-
-    }
-
-
     @Extension
     public static class DescriptorImpl extends Descriptor<AuditLogger> {
 
         @Override
         public String getDisplayName() {
-            return "Syslog server";
+            return "Syslog (TLS & UDP) server";
         }
 
         public ListBoxModel doFillLevelFilterItems() {
@@ -200,6 +210,7 @@ public class SyslogAuditLogger extends AuditLogger {
 
         public ListBoxModel doFillNetworkProtocolItems() {
             ListBoxModel items = new ListBoxModel();
+            items.add("TLS");
             items.add("UDP");
             return items;
         }

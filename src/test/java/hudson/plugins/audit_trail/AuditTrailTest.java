@@ -29,12 +29,14 @@ import hudson.Util;
 import hudson.model.Cause.UserCause;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
+import org.jvnet.hudson.test.HudsonTestCase;
+
 import java.io.File;
 import java.util.regex.Pattern;
-import org.jvnet.hudson.test.HudsonTestCase;
 
 /**
  * Test interaction of audit-trail plugin with Jenkins core.
+ *
  * @author Alan Harder
  */
 public class AuditTrailTest extends HudsonTestCase {
@@ -66,6 +68,6 @@ public class AuditTrailTest extends HudsonTestCase {
 
         String log = Util.loadFile(new File(tmpDir, "test.log.0"));
         assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
-            + " .*job/test-job/doWipeOutWorkspace by .*", Pattern.DOTALL).matcher(log).matches());
+                + " .*job/test-job/doWipeOutWorkspace by .*", Pattern.DOTALL).matcher(log).matches());
     }
 }

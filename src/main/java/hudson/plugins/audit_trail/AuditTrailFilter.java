@@ -26,12 +26,7 @@ package hudson.plugins.audit_trail;
 import hudson.model.Hudson;
 import hudson.model.User;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -42,6 +37,7 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
+ *
  * @author Alan Harder
  */
 public class AuditTrailFilter implements Filter {
@@ -56,12 +52,12 @@ public class AuditTrailFilter implements Filter {
         this.plugin = plugin;
     }
 
-    public void init(FilterConfig fc) {
-    }
-
     static void setPattern(String pattern) throws PatternSyntaxException {
         uriPattern = Pattern.compile(pattern);
         LOGGER.log(Level.FINE, "set pattern to {0}", pattern);
+    }
+
+    public void init(FilterConfig fc) {
     }
 
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
@@ -78,14 +74,15 @@ public class AuditTrailFilter implements Filter {
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null ? user.getId() : req.getRemoteAddr(),
-                   extra = "";
+                    extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) try {
                 extra = " (" + Hudson.getInstance().getQueue().getItem(Integer.parseInt(
                         uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
-            } catch (Exception ignore) { }
+            } catch (Exception ignore) {
+            }
 
-            if(LOGGER.isLoggable(Level.FINE))
+            if (LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
 
             plugin.onRequest(uri, extra, username);

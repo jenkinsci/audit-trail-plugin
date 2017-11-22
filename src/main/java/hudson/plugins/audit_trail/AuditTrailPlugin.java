@@ -18,8 +18,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 package hudson.plugins.audit_trail;
 
@@ -29,26 +29,27 @@ import hudson.model.*;
 import hudson.model.Descriptor.FormException;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import javax.servlet.ServletException;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
+ *
  * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
-    private String pattern = ".*/(?:configSubmit|doDelete|postBuildResult|enable|disable|"
-      + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|"
-      + "cancelQuietDown|quietDown|restart|exit|safeExit)";
+    private String pattern = ".*/(?:configSubmit|doDelete|job|postBuildResult|enable|disable|"
+            + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|enable|disable"
+            + "cancelQuietDown|quietDown|restart|exit|safeExit)";
     private boolean logBuildCause = true;
 
     private List<AuditLogger> loggers = new ArrayList<AuditLogger>();
@@ -58,11 +59,20 @@ public class AuditTrailPlugin extends Plugin {
     private transient String log;
     private transient int limit = 1, count = 1;
 
-    public String getPattern() { return pattern; }
-    public boolean getLogBuildCause() { return logBuildCause; }
-    public List<AuditLogger> getLoggers() { return loggers; }
+    public String getPattern() {
+        return pattern;
+    }
 
-    @Override public void start() throws Exception {
+    public boolean getLogBuildCause() {
+        return logBuildCause;
+    }
+
+    public List<AuditLogger> getLoggers() {
+        return loggers;
+    }
+
+    @Override
+    public void start() throws Exception {
         // Set a default value; will be overridden by load() once customized:
         load();
         applySettings();
@@ -71,7 +81,8 @@ public class AuditTrailPlugin extends Plugin {
         PluginServletFilter.addFilter(new AuditTrailFilter(this));
     }
 
-    @Override public void configure(StaplerRequest req, JSONObject formData)
+    @Override
+    public void configure(StaplerRequest req, JSONObject formData)
             throws IOException, ServletException, FormException {
         pattern = formData.optString("pattern");
         logBuildCause = formData.optBoolean("logBuildCause", true);
@@ -85,12 +96,12 @@ public class AuditTrailPlugin extends Plugin {
         return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
     }
 
-
     private void applySettings() {
         try {
             AuditTrailFilter.setPattern(pattern);
+        } catch (PatternSyntaxException ex) {
+            ex.printStackTrace();
         }
-        catch (PatternSyntaxException ex) { ex.printStackTrace(); }
 
         for (AuditLogger logger : loggers) {
             logger.configure();
@@ -103,11 +114,13 @@ public class AuditTrailPlugin extends Plugin {
             StringBuilder buf = new StringBuilder(100);
             for (CauseAction action : run.getActions(CauseAction.class)) {
                 for (Cause cause : action.getCauses()) {
-                    if (buf.length() > 0) buf.append(", ");
+                    if (buf.length() > 0)
+                        buf.append(", ");
                     buf.append(cause.getShortDescription());
                 }
             }
-            if (buf.length() == 0) buf.append("Started");
+            if (buf.length() == 0)
+                buf.append("Started");
 
             for (AuditLogger logger : loggers) {
                 logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
@@ -122,27 +135,34 @@ public class AuditTrailPlugin extends Plugin {
         }
 
     }
+
     public void onFinalized(AbstractBuild build) {
         if (this.started) {
             StringBuilder causeBuilder = new StringBuilder(100);
             for (CauseAction action : build.getActions(CauseAction.class)) {
                 for (Cause cause : action.getCauses()) {
-                    if (causeBuilder.length() > 0) causeBuilder.append(", ");
+                    if (causeBuilder.length() > 0)
+                        causeBuilder.append(", ");
                     causeBuilder.append(cause.getShortDescription());
                 }
             }
-            if (causeBuilder.length() == 0) causeBuilder.append("Started");
+            if (causeBuilder.length() == 0)
+                causeBuilder.append("Started");
 
             for (AuditLogger logger : loggers) {
-                String message = build.getFullDisplayName() +
-                        " " + causeBuilder.toString() +
-                        " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
-                        " started at " + build.getTimestampString2() +
-                        " completed in " + build.getDuration() + "ms" +
-                        " completed: " + build.getResult();
-                logger.log(message);
+                try {
+                    String message = build.getFullDisplayName() +
+                            " " + causeBuilder.toString() +
+                            " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
+                            " started at " + build.getTimestampString2() +
+                            " completed in " + build.getDuration() + "ms" +
+                            " completed: " + build.getResult() +
+                            " \n[MESSAGE] = " + build.getLog();
+                    logger.log(message);
+                } catch (IOException e) {
+                    logger.log("IOException : " + e.getMessage());
+                }
             }
-
         }
     }
 
@@ -153,7 +173,6 @@ public class AuditTrailPlugin extends Plugin {
             }
         }
     }
-
 
     /**
      * Backward compatibility
@@ -180,11 +199,10 @@ public class AuditTrailPlugin extends Plugin {
         try {
             Pattern.compile(value);
             return FormValidation.ok();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             return FormValidation.errorWithMarkup("Invalid <a href=\""
-                + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
-                + "\">regular expression</a> (" + ex.getMessage() + ")");
+                    + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
+                    + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
 

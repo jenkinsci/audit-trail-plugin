@@ -7,8 +7,8 @@ import hudson.model.listeners.RunListener;
 import jenkins.model.Jenkins;
 
 /**
-* @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
-*/
+ * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
+ */
 @Extension
 public class AuditTrailRunListener extends RunListener<Run> {
 
