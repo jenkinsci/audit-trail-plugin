@@ -161,16 +161,16 @@ public class SyslogAuditLogger extends AuditLogger {
         SyslogAuditLogger that = (SyslogAuditLogger) thisObject;
 
         return Objects.equals(syslogServerPort, that.syslogServerPort) &&
-                Objects.equals(appName, that.appName) &&
-                Objects.equals(facility, that.facility) &&
-                Objects.equals(messageFormat, that.messageFormat) &&
-                Objects.equals(messageHostname, that.messageHostname) &&
-                Objects.equals(syslogServerHostname, that.syslogServerHostname) &&
-                Objects.equals(keyStore, that.keyStore) &&
-                Objects.equals(keyStorePasswd, that.keyStorePasswd) &&
-                Objects.equals(trustStore, that.trustStore) &&
-                Objects.equals(cdpLogger, that.cdpLogger) &&
-                Objects.equals(trustStorePasswd, that.trustStorePasswd);
+               Objects.equals(appName, that.appName) &&
+               Objects.equals(facility, that.facility) &&
+               Objects.equals(messageFormat, that.messageFormat) &&
+               Objects.equals(messageHostname, that.messageHostname) &&
+               Objects.equals(syslogServerHostname, that.syslogServerHostname) &&
+               Objects.equals(keyStore, that.keyStore) &&
+               Objects.equals(keyStorePasswd, that.keyStorePasswd) &&
+               Objects.equals(trustStore, that.trustStore) &&
+               Objects.equals(cdpLogger, that.cdpLogger) &&
+               Objects.equals(trustStorePasswd, that.trustStorePasswd);
     }
 
     @Override
@@ -182,12 +182,12 @@ public class SyslogAuditLogger extends AuditLogger {
     @Override
     public String toString() {
         return "SyslogTlsAuditLogger{" +
-                "syslogServerHostname='" + syslogServerHostname + '\'' +
-                ", syslogServerPort=" + syslogServerPort +
-                ", appName='" + appName + '\'' +
-                ", messageHostname='" + messageHostname + '\'' +
-                ", facility=" + facility +
-                '}';
+               "syslogServerHostname='" + syslogServerHostname + '\'' +
+               ", syslogServerPort=" + syslogServerPort +
+               ", appName='" + appName + '\'' +
+               ", messageHostname='" + messageHostname + '\'' +
+               ", facility=" + facility +
+               '}';
     }
 
     @Extension
