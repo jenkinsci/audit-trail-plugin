@@ -29,27 +29,27 @@ import hudson.model.*;
 import hudson.model.Descriptor.FormException;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import javax.servlet.ServletException;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
- * 
+ *
  * @author Alan Harder
  */
 public class AuditTrailPlugin extends Plugin {
     private String pattern = ".*/(?:configSubmit|doDelete|job|postBuildResult|enable|disable|"
-                    + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|enable|disable"
-                    + "cancelQuietDown|quietDown|restart|exit|safeExit)";
+            + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|enable|disable"
+            + "cancelQuietDown|quietDown|restart|exit|safeExit)";
     private boolean logBuildCause = true;
 
     private List<AuditLogger> loggers = new ArrayList<AuditLogger>();
@@ -83,11 +83,11 @@ public class AuditTrailPlugin extends Plugin {
 
     @Override
     public void configure(StaplerRequest req, JSONObject formData)
-                    throws IOException, ServletException, FormException {
+            throws IOException, ServletException, FormException {
         pattern = formData.optString("pattern");
         logBuildCause = formData.optBoolean("logBuildCause", true);
         loggers = Descriptor.newInstancesFromHeteroList(
-                        req, formData, "loggers", getLoggerDescriptors());
+                req, formData, "loggers", getLoggerDescriptors());
         save();
         applySettings();
     }
@@ -150,15 +150,19 @@ public class AuditTrailPlugin extends Plugin {
                 causeBuilder.append("Started");
 
             for (AuditLogger logger : loggers) {
-                String message = build.getFullDisplayName() +
-                                " " + causeBuilder.toString() +
-                                " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
-                                " started at " + build.getTimestampString2() +
-                                " completed in " + build.getDuration() + "ms" +
-                                " completed: " + build.getResult();
-                logger.log(message);
+                try {
+                    String message = build.getFullDisplayName() +
+                            " " + causeBuilder.toString() +
+                            " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
+                            " started at " + build.getTimestampString2() +
+                            " completed in " + build.getDuration() + "ms" +
+                            " completed: " + build.getResult() +
+                            " \n[MESSAGE] = " + build.getLog();
+                    logger.log(message);
+                } catch (IOException e) {
+                    logger.log("IOException : " + e.getMessage());
+                }
             }
-
         }
     }
 
@@ -190,15 +194,15 @@ public class AuditTrailPlugin extends Plugin {
      * Validate regular expression syntax.
      */
     public FormValidation doRegexCheck(@QueryParameter final String value)
-                    throws IOException, ServletException {
+            throws IOException, ServletException {
         // No permission needed for simple syntax check
         try {
             Pattern.compile(value);
             return FormValidation.ok();
         } catch (Exception ex) {
             return FormValidation.errorWithMarkup("Invalid <a href=\""
-                            + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
-                            + "\">regular expression</a> (" + ex.getMessage() + ")");
+                    + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
+                    + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
 

@@ -24,7 +24,6 @@ abstract class LogReceptor {
             conf.setFacility(defaultFacility);
             conf.setLocalName(defaultMsgHostName);
             conf.setUseStructuredData(true);
-            conf.setUseStructuredData(true);
             conf.setSendLocalName(true);
             conf.setIncludeIdentInMessageModifier(false);
 

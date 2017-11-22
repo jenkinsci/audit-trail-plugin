@@ -4,23 +4,35 @@
         <f:textbox/>
     </f:entry>
     <f:entry title="${%Syslog Server Port}" field="syslogServerPort">
-        <f:number default="514"/>
+        <f:number default="1999"/>
     </f:entry>
     <f:advanced>
         <f:entry field="networkProtocol" title="${%Syslog network protocol}">
-            <f:select default="UDP"/>
+            <f:select default="TLS"/>
         </f:entry>
         <f:entry field="messageFormat" title="${%Syslog message format}">
             <f:select default="RFC_3164"/>
         </f:entry>
-        <f:entry title="${%Syslog App Name}" field="appName">
+        <f:entry field="appName" title="${%Syslog App Name}">
             <f:textbox default="jenkins"/>
         </f:entry>
-        <f:entry title="${%Message Hostname}" field="messageHostname">
+        <f:entry field="messageHostname" title="${%Message Hostname}">
             <f:textbox/>
         </f:entry>
         <f:entry field="facility" title="${%Syslog Facility}">
             <f:select default="USER"/>
+        </f:entry>
+        <f:entry field="keyStore" title="${%Syslog keyStore}">
+            <f:textbox default="/var/jenkins_home/clientkeystore.jks"/>
+        </f:entry>
+        <f:entry field="keyStorePasswd" title="${%Syslog keyStorePasswd}">
+            <f:textbox default="pa55word"/>
+        </f:entry>
+        <f:entry field="trustStore" title="${%Syslog trustStore}">
+            <f:textbox default="/var/jenkins_home/mytruststore"/>
+        </f:entry>
+        <f:entry field="trustStorePasswd" title="${%Syslog trustStorePasswd}">
+            <f:textbox default="pa55word"/>
         </f:entry>
     </f:advanced>
 </j:jelly>
