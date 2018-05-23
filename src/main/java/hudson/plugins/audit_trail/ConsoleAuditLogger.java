@@ -16,9 +16,9 @@ public class ConsoleAuditLogger extends AuditLogger {
     public enum Output {STD_OUT, STD_ERR}
 
     private final Output output;
-    private final PrintStream out;
+    private transient PrintStream out;
     private final String dateFormat;
-    private final SimpleDateFormat sdf;
+    private transient SimpleDateFormat sdf;
 
 
     @DataBoundConstructor
@@ -29,18 +29,7 @@ public class ConsoleAuditLogger extends AuditLogger {
             throw new NullPointerException("dateFormat can not be null");
 
         this.output = output;
-        switch (output) {
-            case STD_ERR:
-                out = System.err;
-                break;
-            case STD_OUT:
-                out = System.out;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported output " + output);
-        }
         this.dateFormat = dateFormat;
-        sdf = new SimpleDateFormat(dateFormat);
     }
 
     @Override
@@ -53,6 +42,18 @@ public class ConsoleAuditLogger extends AuditLogger {
     @Override
     public void configure() {
 
+        switch (output) {
+            case STD_ERR:
+                out = System.err;
+                break;
+            case STD_OUT:
+                out = System.out;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported output " + output);
+        }
+
+        sdf = new SimpleDateFormat(dateFormat);
     }
 
     public Output getOutput() {
