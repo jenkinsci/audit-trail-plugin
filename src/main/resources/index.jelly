@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
   Keep a log of who performed particular Jenkins operations, such as configuring jobs.
 </div>

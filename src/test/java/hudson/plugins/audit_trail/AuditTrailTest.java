@@ -23,49 +23,69 @@
  */
 package hudson.plugins.audit_trail;
 
+import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.Util;
-import hudson.model.Cause.UserCause;
+import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.JenkinsRule;
+
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.regex.Pattern;
-import org.jvnet.hudson.test.HudsonTestCase;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test interaction of audit-trail plugin with Jenkins core.
  * @author Alan Harder
  */
-public class AuditTrailTest extends HudsonTestCase {
+public class AuditTrailTest {
 
-    public void testPlugin() throws Exception {
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
+    @Rule
+    public TemporaryFolder tmpDir = new TemporaryFolder();
+
+    @Test
+    public void shouldGenerateTwoAuditLogs() throws Exception {
+        // Given
         // Configure plugin
-        File tmpDir = createTmpDir(), logFile = new File(tmpDir, "test.log");
-        WebClient wc = new WebClient();
+        File logFile = new File(tmpDir.getRoot(), "test.log");
+        JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
-        form.getButtonByCaption("Add Logger").click();
+        j.getButtonByCaption(form, "Add Logger").click();
         configure.getAnchorByText("Log file").click();
+        wc.waitForBackgroundJavaScript(2000);
         form.getInputByName("_.log").setValueAttribute(logFile.getPath());
         form.getInputByName("_.limit").setValueAttribute("1");
         form.getInputByName("_.count").setValueAttribute("2");
-        submit(form);
+        j.submit(form);
 
-        AuditTrailPlugin plugin = Hudson.getInstance().getPlugin(AuditTrailPlugin.class);
+        AuditTrailPlugin plugin = Jenkins.get().getPlugin(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
         assertEquals("log path", logFile.getPath(), logger.getLog());
         assertEquals("log size", 1, logger.getLimit());
         assertEquals("log count", 2, logger.getCount());
         assertTrue("log build cause", plugin.getLogBuildCause());
 
+        // When
         // Perform a couple actions to be logged
-        FreeStyleProject job = createFreeStyleProject("test-job");
-        job.scheduleBuild2(0, new UserCause()).get();
-        wc.goTo(job.getUrl() + "doWipeOutWorkspace");
+        FreeStyleProject job = j.createFreeStyleProject("test-job");
+        job.scheduleBuild2(0, new Cause.UserIdCause()).get();
+        wc.getPage(new WebRequest(wc.createCrumbedUrl(job.getUrl() + "enable"), HttpMethod.POST));
 
-        String log = Util.loadFile(new File(tmpDir, "test.log.0"));
+        // Then
+        String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), Charset.forName("UTF-8"));
         assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
-            + " .*job/test-job/doWipeOutWorkspace by .*", Pattern.DOTALL).matcher(log).matches());
+                + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
     }
 }
