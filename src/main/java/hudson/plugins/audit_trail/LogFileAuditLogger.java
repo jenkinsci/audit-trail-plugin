@@ -70,10 +70,10 @@ public class LogFileAuditLogger extends AuditLogger {
         try {
             FileHandler h = new FileHandler(log, limit * 1024 * 1024, count, true);
             h.setFormatter(new Formatter() {
-                SimpleDateFormat dateformat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa ");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa ");
 
                 public synchronized String format(LogRecord record) {
-                    return dateformat.format(new Date(record.getMillis()))
+                    return dateFormat.format(new Date(record.getMillis()))
                             + record.getMessage() + '\n';
                 }
             });

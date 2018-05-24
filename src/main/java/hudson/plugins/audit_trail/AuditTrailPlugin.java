@@ -29,17 +29,17 @@ import hudson.model.*;
 import hudson.model.Descriptor.FormException;
 import hudson.util.FormValidation;
 import hudson.util.PluginServletFilter;
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+
+import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.servlet.ServletException;
-
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
@@ -82,7 +82,7 @@ public class AuditTrailPlugin extends Plugin {
     }
 
     public DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> getLoggerDescriptors() {
-        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
+        return Jenkins.get().getDescriptorList(AuditLogger.class);
     }
 
 
