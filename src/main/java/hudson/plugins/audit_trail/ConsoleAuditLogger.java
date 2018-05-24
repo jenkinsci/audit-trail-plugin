@@ -16,9 +16,9 @@ public class ConsoleAuditLogger extends AuditLogger {
     public enum Output {STD_OUT, STD_ERR}
 
     private final Output output;
-    private final PrintStream out;
+    private transient PrintStream out;
     private final String dateFormat;
-    private final SimpleDateFormat sdf;
+    private transient SimpleDateFormat sdf;
 
 
     @DataBoundConstructor
