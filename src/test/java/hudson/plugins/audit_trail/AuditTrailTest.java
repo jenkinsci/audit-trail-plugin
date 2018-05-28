@@ -70,7 +70,7 @@ public class AuditTrailTest {
         form.getInputByName("_.count").setValueAttribute("2");
         j.submit(form);
 
-        AuditTrailPlugin plugin = Jenkins.get().getPlugin(AuditTrailPlugin.class);
+        AuditTrailPlugin plugin = Jenkins.getInstance().getPlugin(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
         assertEquals("log path", logFile.getPath(), logger.getLog());
         assertEquals("log size", 1, logger.getLimit());

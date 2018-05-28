@@ -82,7 +82,7 @@ public class AuditTrailPlugin extends Plugin {
     }
 
     public DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> getLoggerDescriptors() {
-        return Jenkins.get().getDescriptorList(AuditLogger.class);
+        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
     }
 
 

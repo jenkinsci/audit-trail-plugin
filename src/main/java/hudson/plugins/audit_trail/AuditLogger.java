@@ -15,7 +15,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
     public abstract void log(String event);
 
     public Descriptor getDescriptor() {
-        return Jenkins.get().getDescriptorOrDie(getClass());
+        return Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
 
 }

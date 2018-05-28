@@ -18,7 +18,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        AuditTrailPlugin plugin = (AuditTrailPlugin) Jenkins.get().getPlugin("audit-trail");
+        AuditTrailPlugin plugin = (AuditTrailPlugin) Jenkins.getInstance().getPlugin("audit-trail");
         if (plugin != null) {
             plugin.onStarted(run);
         }
@@ -26,7 +26,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onFinalized(Run run) {
-        AuditTrailPlugin plugin = (AuditTrailPlugin) Jenkins.get().getPlugin("audit-trail");
+        AuditTrailPlugin plugin = (AuditTrailPlugin) Jenkins.getInstance().getPlugin("audit-trail");
         if (plugin != null) {
             plugin.onFinalized(run);
         }

@@ -23,8 +23,8 @@
  */
 package hudson.plugins.audit_trail;
 
-import hudson.model.Hudson;
 import hudson.model.User;
+import jenkins.model.Jenkins;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -76,7 +76,7 @@ public class AuditTrailFilter implements Filter {
                    extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) try {
-                extra = " (" + Hudson.get().getQueue().getItem(Integer.parseInt(
+                extra = " (" + Jenkins.getInstance().getQueue().getItem(Integer.parseInt(
                         uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
             } catch (Exception ignore) { }
 

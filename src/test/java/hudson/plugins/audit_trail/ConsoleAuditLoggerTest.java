@@ -58,7 +58,7 @@ public class ConsoleAuditLoggerTest {
 
         // Then
         // submit configuration page without any errors
-        AuditTrailPlugin plugin = Jenkins.get().getPlugin(AuditTrailPlugin.class);
+        AuditTrailPlugin plugin = Jenkins.getInstance().getPlugin(AuditTrailPlugin.class);
         assertEquals("amount of loggers", 1, plugin.getLoggers().size());
         AuditLogger logger = plugin.getLoggers().get(0);
         assertTrue("ConsoleAuditLogger should be configured", logger instanceof ConsoleAuditLogger);
