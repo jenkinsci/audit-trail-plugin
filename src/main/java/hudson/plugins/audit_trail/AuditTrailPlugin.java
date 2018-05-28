@@ -122,6 +122,7 @@ public class AuditTrailPlugin extends Plugin {
         }
 
     }
+
     public void onFinalized(AbstractBuild build) {
         if (this.started) {
             StringBuilder causeBuilder = new StringBuilder(100);
@@ -136,7 +137,7 @@ public class AuditTrailPlugin extends Plugin {
             for (AuditLogger logger : loggers) {
                 String message = build.getFullDisplayName() +
                         " " + causeBuilder.toString() +
-                        " on node " + (build.getBuiltOn() == null ? "#unknown#" : build.getBuiltOn().getDisplayName()) +
+                        " on node " + buildNodeName(build) +
                         " started at " + build.getTimestampString2() +
                         " completed in " + build.getDuration() + "ms" +
                         " completed: " + build.getResult();
@@ -144,6 +145,15 @@ public class AuditTrailPlugin extends Plugin {
             }
 
         }
+    }
+
+    private String buildNodeName(AbstractBuild build) {
+        Node node = build.getBuiltOn();
+        if (node != null) {
+            return node.getDisplayName();
+        }
+
+        return "#unknown#";
     }
 
     /* package */ void onRequest(String uri, String extra, String username) {

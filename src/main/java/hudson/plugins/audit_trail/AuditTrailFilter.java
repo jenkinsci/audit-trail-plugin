@@ -78,7 +78,9 @@ public class AuditTrailFilter implements Filter {
             if (uri.startsWith("/queue/item/")) try {
                 extra = " (" + Jenkins.getInstance().getQueue().getItem(Integer.parseInt(
                         uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
-            } catch (Exception ignore) { }
+            } catch (Exception e) {
+                LOGGER.log(Level.FINEST, "Error occurred during parsing queue item", e);
+            }
 
             if(LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
