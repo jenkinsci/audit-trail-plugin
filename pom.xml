@@ -9,7 +9,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>io.jenkins.plugins</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>audit-trail</artifactId>
     <packaging>hpi</packaging>
     <name>Audit Trail</name>
