@@ -75,6 +75,8 @@ public class AuditTrailPlugin extends Plugin {
             throws IOException, ServletException, FormException {
         pattern = formData.optString("pattern");
         logBuildCause = formData.optBoolean("logBuildCause", true);
+        // readResolve makes sure loggers is initialized, so it should never be null.
+        loggers.forEach(AuditLogger::cleanUp);
         loggers = Descriptor.newInstancesFromHeteroList(
                 req, formData, "loggers", getLoggerDescriptors());
         save();
