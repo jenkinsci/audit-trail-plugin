@@ -84,7 +84,7 @@ public class LogFileAuditLogger extends AuditLogger {
     }
 
     @Override
-    public void cleanUp() {
+    public void cleanUp() throws SecurityException {
         if(handler != null) {
             handler.close();
         }
