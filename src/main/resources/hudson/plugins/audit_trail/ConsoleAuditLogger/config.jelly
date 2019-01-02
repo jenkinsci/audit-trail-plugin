@@ -6,7 +6,7 @@
     </f:entry>
     <f:advanced>
         <f:entry title="${%Date Format}" field="dateFormat">
-            <f:textbox default="yyyy/MM/dd MM:ss:SSS"/>
+            <f:textbox default="yyyy-MM-dd HH:mm:ss:SSS"/>
         </f:entry>
         <f:entry title="${%Log Prefix}" field="logPrefix">
             <f:textbox/>
