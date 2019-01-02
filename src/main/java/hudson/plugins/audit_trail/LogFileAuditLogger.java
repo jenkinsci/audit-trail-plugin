@@ -83,6 +83,13 @@ public class LogFileAuditLogger extends AuditLogger {
         } catch (IOException ex) { ex.printStackTrace(); }
     }
 
+    @Override
+    public void cleanUp() throws SecurityException {
+        if(handler != null) {
+            handler.close();
+        }
+    }
+
     @Extension
     public static class DescriptorImpl extends Descriptor<AuditLogger> {
 

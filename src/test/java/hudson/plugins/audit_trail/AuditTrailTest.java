@@ -31,9 +31,11 @@ import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
@@ -54,6 +56,18 @@ public class AuditTrailTest {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
+    private static final int TIMEOUT = 2000;
+    private static final String LOG_LOCATION_INPUT_NAME = "_.log";
+    private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
+    private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
+    private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
+    private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
+
+    @After
+    public void tearDown() {
+        tmpDir.delete();
+    }
+
     @Test
     public void shouldGenerateTwoAuditLogs() throws Exception {
         // Given
@@ -62,12 +76,12 @@ public class AuditTrailTest {
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
-        j.getButtonByCaption(form, "Add Logger").click();
-        configure.getAnchorByText("Log file").click();
-        wc.waitForBackgroundJavaScript(2000);
-        form.getInputByName("_.log").setValueAttribute(logFile.getPath());
-        form.getInputByName("_.limit").setValueAttribute("1");
-        form.getInputByName("_.count").setValueAttribute("2");
+        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
+        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
+        wc.waitForBackgroundJavaScript(TIMEOUT);
+        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
+        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
+        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
         j.submit(form);
 
         AuditTrailPlugin plugin = Jenkins.getInstance().getPlugin(AuditTrailPlugin.class);
@@ -87,5 +101,29 @@ public class AuditTrailTest {
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), Charset.forName("UTF-8"));
         assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
                 + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
+    }
+
+    @Issue("JENKINS-44129")
+    @Test
+    public void shouldCorrectlyCleanUpFileHandlerOnApply() throws Exception {
+        // Given
+        JenkinsRule.WebClient wc = j.createWebClient();
+        HtmlPage configure = wc.goTo("configure");
+        HtmlForm form = configure.getFormByName("config");
+        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
+        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
+        wc.waitForBackgroundJavaScript(AuditTrailTest.TIMEOUT);
+        File logFile = new File(tmpDir.getRoot(), "unique.log");
+        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
+        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
+        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("1");
+        j.submit(form);
+
+        // When
+        j.submit(form);
+
+        // Then
+        assertEquals("Only two files should be present, the file opened by the FileHandler and its lock",
+                2, tmpDir.getRoot().list().length);
     }
 }
