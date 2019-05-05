@@ -4,12 +4,16 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static java.util.logging.Level.CONFIG;
 
@@ -17,6 +21,8 @@ import static java.util.logging.Level.CONFIG;
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  */
 public class LogFileAuditLogger extends AuditLogger {
+
+    private static final Logger LOGGER = Logger.getLogger(LogFileAuditLogger.class.getName());
 
     private transient FileHandler handler;
 
@@ -67,20 +73,40 @@ public class LogFileAuditLogger extends AuditLogger {
 
     @Override
     public void configure() {
+        // looks like https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6244047 is somehow still there
+        // there is no way for us to know before hand what path we are looking to create as it would
+        // mean having access to FileHandler#generate so either reflexion or catching the exception and retrieving
+        // the path. Let's go with number 2.
         try {
-            FileHandler h = new FileHandler(log, limit * 1024 * 1024, count, true);
-            h.setFormatter(new Formatter() {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa ");
-
-                public synchronized String format(LogRecord record) {
-                    return dateFormat.format(new Date(record.getMillis()))
-                            + record.getMessage() + '\n';
+            FileHandler h = null;
+            try {
+                h = new FileHandler(log, limit * 1024 * 1024, count, true);
+            } catch (NoSuchFileException ex) {
+                LOGGER.info("Couldn't create the file handler lock file, forcing creation of intermediate directories");
+                String lockFileName = ex.getFile();
+                boolean mkdirs = new File(lockFileName).getParentFile().mkdirs();
+                if (mkdirs) {
+                    h = new FileHandler(log, limit * 1024 * 1024, count, true);
                 }
-            });
-            h.setLevel(CONFIG);
-            handler = h;
+            }
+            if (h != null) {
+                h.setFormatter(new Formatter() {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa ");
 
-        } catch (IOException ex) { ex.printStackTrace(); }
+                    @Override
+                    public synchronized String format(LogRecord record) {
+                        return dateFormat.format(new Date(record.getMillis()))
+                                + record.getMessage() + '\n';
+                    }
+                });
+                h.setLevel(CONFIG);
+                handler = h;
+            } else {
+                LOGGER.severe("Couldn't configure the plugin, as the file handler wasn't successfully created. You should report this issue");
+            }
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Couldn't configure the plugin, you should report this issue", ex);
+        }
     }
 
     @Override
