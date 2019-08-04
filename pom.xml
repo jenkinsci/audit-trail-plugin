@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.43</version>
+        <version>3.46</version>
         <relativePath />
     </parent>
 
@@ -16,6 +16,7 @@
     <properties>
         <jenkins.version>2.60.3</jenkins.version>
         <java.level>8</java.level>
+        <configuration-as-code.version>1.23</configuration-as-code.version>
     </properties>
 
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Audit+Trail+Plugin</url>
@@ -39,6 +40,19 @@
             <version>3.0.2</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>io.jenkins</groupId>
+            <artifactId>configuration-as-code</artifactId>
+            <version>${configuration-as-code.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins</groupId>
+            <artifactId>configuration-as-code</artifactId>
+            <version>${configuration-as-code.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -55,7 +69,6 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>2.5</version>
                 <configuration>
                     <loggers>
                         <hudson.plugins.audit_trail>FINE</hudson.plugins.audit_trail>
