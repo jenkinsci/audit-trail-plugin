@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+    <f:entry title="${%Elastic Search Server URI}" field="uri">
+        <f:textbox default="https://elasticsearch.cx-solinas-c4core-s1.solinas.eurw3.lms.sap.cx/jenkins"/>
+    </f:entry>
+    <f:entry title="${%User name}" field="username">
+        <f:textbox/>
+    </f:entry>
+    <f:entry title="${%Password}" field="password">
+        <f:password/>
+    </f:entry>
+    <f:entry title="${%Mime Type}" field="mimeType">
+        <f:textbox default="text/plain"/>
+    </f:entry>
+    <f:advanced>
+        <f:entry title="${%Custom Server Certificate}" field="customServerCertificateId">
+            <c:select/>
+        </f:entry>
+        <f:entry title="${%Skip certificate validation}" field="skipCertificateValidation">
+            <f:checkbox name="skipCertificateValidation" default="false"/>
+        </f:entry>
+    </f:advanced>
+</j:jelly>
