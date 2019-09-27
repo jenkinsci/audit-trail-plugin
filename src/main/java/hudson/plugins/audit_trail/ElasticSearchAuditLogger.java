@@ -13,18 +13,18 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -59,6 +59,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 
 /**
  * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/ElasticSearchAuditLogger/config.jelly</code>
@@ -70,13 +71,13 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private URI uri;
     private String username;
     private Secret password;
-    private String mimeType;
     private String customServerCertificateId;
     private boolean skipCertificateValidation = false;
 
     private transient ElasticSearchSender elasticSearchSender;
 
     protected static final Logger LOGGER = Logger.getLogger(ElasticSearchAuditLogger.class.getName());
+    private static final FastDateFormat DATE_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ssZ");
 
     @DataBoundConstructor
     public ElasticSearchAuditLogger(URI esServerUri, boolean skipCertificateValidation) {
@@ -121,7 +122,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
         // Create the sender for Elastic Search
         try {
-            elasticSearchSender = new ElasticSearchSender(uri, username, Secret.toString(password), mimeType, clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
+            elasticSearchSender = new ElasticSearchSender(uri, username, Secret.toString(password), clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
             LOGGER.log(Level.FINE, "ElasticSearchAuditLogger: {0}", this);
         } catch (IOException ioe) {
             LOGGER.log(Level.SEVERE, "Unable to create ElasticSearchSender", ioe);
@@ -165,15 +166,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         this.password = Secret.fromString(password);
     }
 
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    @DataBoundSetter
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
-
     public String getCustomServerCertificateId() {
         return customServerCertificateId;
     }
@@ -212,9 +204,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         if (!Secret.toString(password).equals(that.getPassword())) {
             return false;
         }
-        if (mimeType != that.mimeType) {
-            return false;
-        }
         if (customServerCertificateId != null ? !customServerCertificateId.equals(that.customServerCertificateId) : that.customServerCertificateId != null) {
             return false;
         }
@@ -232,7 +221,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         result = prime * result + ((uri == null) ? 0 : uri.hashCode());
         result = prime * result + ((username == null) ? 0 : username.hashCode());
         result = prime * result + Secret.toString(password).hashCode();
-        result = prime * result + ((mimeType == null) ? 0 : mimeType.hashCode());
         result = prime * result + ((customServerCertificateId == null) ? 0 : customServerCertificateId.hashCode());
         result = prime * result + Boolean.hashCode(skipCertificateValidation);
         return result;
@@ -244,7 +232,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 "uri='" + uri + "'" +
                 ", username='" + username + "'" +
                 ", password='" + password + "'" +
-                ", mimeType='" + mimeType + "'" +
                 ", customServerCertificateId='" + customServerCertificateId + "'" +
                 ", skipCertificateValidation='" + skipCertificateValidation + "'" +
                 "}";
@@ -256,11 +243,9 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         private final URI uri;
         private final String auth;
-        private String mimeType;
 
-        public ElasticSearchSender(URI uri, String username, String password, String mimeType, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
+        public ElasticSearchSender(URI uri, String username, String password, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
             this.uri = uri;
-            this.mimeType = mimeType;
             if (StringUtils.isNotBlank(username)) {
                 auth = Base64.encodeBase64String((username + ":" + StringUtils.defaultString(password)).getBytes(StandardCharsets.UTF_8));
             } else {
@@ -301,9 +286,11 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         HttpPost getHttpPost(String data) {
             HttpPost postRequest = new HttpPost(uri);
             // char encoding is set to UTF_8 since this request posts a JSON string
-            StringEntity input = new StringEntity(data, StandardCharsets.UTF_8);
-            mimeType = (mimeType != null) ? mimeType : ContentType.APPLICATION_JSON.toString();
-            input.setContentType(mimeType);
+            JSONObject payload = new JSONObject();
+            payload.put("message", data);
+            payload.put("@timestamp", DATE_FORMATTER.format(Calendar.getInstance().getTime()));
+            StringEntity input = new StringEntity(payload.toString(), StandardCharsets.UTF_8);
+            input.setContentType(ContentType.APPLICATION_JSON.toString());
             postRequest.setEntity(input);
             if (auth != null) {
                 postRequest.addHeader("Authorization", "Basic " + auth);
@@ -375,19 +362,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 url.toURI();
             } catch (MalformedURLException | URISyntaxException e) {
                 return FormValidation.error(e.getMessage());
-            }
-            return FormValidation.ok();
-        }
-
-        public FormValidation doCheckMimeType(@QueryParameter("value") String value) {
-            if (StringUtils.isBlank(value)) {
-                return FormValidation.error("Mime type must be set");
-            }
-            try {
-                //This is simply to check validity of the given mimeType
-                new MimeType(value);
-            } catch (MimeTypeParseException e) {
-                return FormValidation.error("Invalid mime type");
             }
             return FormValidation.ok();
         }
