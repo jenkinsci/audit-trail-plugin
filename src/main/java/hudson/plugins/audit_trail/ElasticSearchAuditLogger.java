@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +36,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -47,13 +45,13 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import com.google.common.collect.Range;
 
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -68,10 +66,9 @@ import net.sf.json.JSONObject;
  */
 public class ElasticSearchAuditLogger extends AuditLogger {
 
-    private URI uri;
-    private String username;
-    private Secret password;
-    private String customServerCertificateId;
+    private String url;
+    private String usernamePasswordCredentialsId;
+    private String clientCertificateCredentialsId;
     private boolean skipCertificateValidation = false;
 
     private transient ElasticSearchSender elasticSearchSender;
@@ -80,8 +77,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private static final FastDateFormat DATE_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ssZ");
 
     @DataBoundConstructor
-    public ElasticSearchAuditLogger(URI esServerUri, boolean skipCertificateValidation) {
-        this.uri = esServerUri;
+    public ElasticSearchAuditLogger(String esServerUrl, boolean skipCertificateValidation) {
+        this.url = esServerUrl;
         this.skipCertificateValidation = skipCertificateValidation;
     }
 
@@ -93,7 +90,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
         LOGGER.log(Level.FINER, "Send audit message \"{0}\" to Elastic Search server {1}", new Object[]{event, elasticSearchSender});
         try {
-        	elasticSearchSender.sendMessage(event);
+            elasticSearchSender.sendMessage(event);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Exception sending audit message to Elastic Search server " + elasticSearchSender.toString(), e);
             LOGGER.warning(event);
@@ -102,27 +99,36 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
     @Override
     public void configure() {
-        if (uri == null || uri.toString().length() == 0) {
+        if (url == null || url.length() == 0) {
             LOGGER.fine("Elastic Search Logger not configured");
             return;
         }
+        String username = null;
+        String password = null;
+        if (!StringUtils.isBlank(usernamePasswordCredentialsId)) {
+            LOGGER.fine("Username/password credentials specified: " + usernamePasswordCredentialsId);
+            StandardUsernamePasswordCredentials usernamePasswordCredentials = getUsernamePasswordCredentials(usernamePasswordCredentialsId);
+            if (usernamePasswordCredentials != null) {
+                username = usernamePasswordCredentials.getUsername();
+                password = Secret.toString(usernamePasswordCredentials.getPassword());
+            }
+        }
         KeyStore clientKeyStore = null;
         String clientKeyStorePassword = null;
-
-        // Fetch custom alias+certificate as a keystore (if present)
-        if (!StringUtils.isBlank(customServerCertificateId)) {
-            LOGGER.fine("Client certificate specified: " + customServerCertificateId);
-            StandardCertificateCredentials certificateCredentials = getCredentials(customServerCertificateId);
+        if (!StringUtils.isBlank(clientCertificateCredentialsId)) {
+            LOGGER.fine("Client certificate specified: " + clientCertificateCredentialsId);
+            StandardCertificateCredentials certificateCredentials = getCertificateCredentials(clientCertificateCredentialsId);
             if (certificateCredentials != null) {
-                // Fetch keystore containing custom certificate
                 clientKeyStore = certificateCredentials.getKeyStore();
                 clientKeyStorePassword = certificateCredentials.getPassword().getPlainText();
-                LOGGER.fine("Custom keystore loaded");
+                LOGGER.fine("Client certificate keystore loaded");
+            } else {
+                LOGGER.fine("Unable to find certificate credentials: " + clientCertificateCredentialsId);
             }
         }
         // Create the sender for Elastic Search
         try {
-            elasticSearchSender = new ElasticSearchSender(uri, username, Secret.toString(password), clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
+            elasticSearchSender = new ElasticSearchSender(url, username, password, clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
             LOGGER.log(Level.FINE, "ElasticSearchAuditLogger: {0}", this);
         } catch (IOException ioe) {
             LOGGER.log(Level.SEVERE, "Unable to create ElasticSearchSender", ioe);
@@ -131,52 +137,52 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
     }
 
-    private StandardCertificateCredentials getCredentials(String credentials) {
-        return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(StandardCredentials.class,
+    private StandardUsernamePasswordCredentials getUsernamePasswordCredentials(String credentials) {
+        return (StandardUsernamePasswordCredentials) CredentialsMatchers.firstOrNull(
+            CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class,
                 Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
           CredentialsMatchers.withId(credentials)
         );
     }
 
-    @DataBoundSetter
-    public void setUri(URL url) throws URISyntaxException {
-        this.uri = url.toURI();
+    private StandardCertificateCredentials getCertificateCredentials(String credentials) {
+        return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
+            CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class,
+                Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
+          CredentialsMatchers.withId(credentials)
+        );
     }
 
-    public void setUri(URI uri) {
-        this.uri = uri;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    @DataBoundSetter
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return Secret.toString(password);
+    public String getUrl() {
+        return url;
     }
 
     @DataBoundSetter
-    public void setPassword(String password) {
-        this.password = Secret.fromString(password);
+    public void setUrl(String url) throws URISyntaxException, MalformedURLException {
+        this.url = url;
+        new URL(url).toURI();
     }
 
-    public String getCustomServerCertificateId() {
-        return customServerCertificateId;
+    public String getUsernamePasswordCredentialsId() {
+        return usernamePasswordCredentialsId;
     }
 
     @DataBoundSetter
-    public void setCustomServerCertificateId(String customServerCertificateId) {
-        this.customServerCertificateId = customServerCertificateId;
+    public void setUsernamePasswordCredentialsId(String usernamePasswordCredentialsId) {
+        this.usernamePasswordCredentialsId = usernamePasswordCredentialsId;
+    }
+
+    public String getClientCertificateCredentialsId() {
+        return clientCertificateCredentialsId;
+    }
+
+    @DataBoundSetter
+    public void setClientCertificateCredentialsId(String clientCertificateCredentialsId) {
+        this.clientCertificateCredentialsId = clientCertificateCredentialsId;
     }
 
     public boolean getSkipCertificateValidation() {
-    	return skipCertificateValidation;
+        return skipCertificateValidation;
     }
 
     @DataBoundSetter
@@ -195,16 +201,13 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         ElasticSearchAuditLogger that = (ElasticSearchAuditLogger) o;
 
-        if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
+        if (url != null ? !url.equals(that.url) : that.url != null) {
             return false;
         }
-        if (username != null ? !username.equals(that.username) : that.username != null) {
+        if (usernamePasswordCredentialsId != null ? !usernamePasswordCredentialsId.equals(that.usernamePasswordCredentialsId) : that.usernamePasswordCredentialsId != null) {
             return false;
         }
-        if (!Secret.toString(password).equals(that.getPassword())) {
-            return false;
-        }
-        if (customServerCertificateId != null ? !customServerCertificateId.equals(that.customServerCertificateId) : that.customServerCertificateId != null) {
+        if (clientCertificateCredentialsId != null ? !clientCertificateCredentialsId.equals(that.clientCertificateCredentialsId) : that.clientCertificateCredentialsId != null) {
             return false;
         }
         if (skipCertificateValidation != that.skipCertificateValidation) {
@@ -218,10 +221,9 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((uri == null) ? 0 : uri.hashCode());
-        result = prime * result + ((username == null) ? 0 : username.hashCode());
-        result = prime * result + Secret.toString(password).hashCode();
-        result = prime * result + ((customServerCertificateId == null) ? 0 : customServerCertificateId.hashCode());
+        result = prime * result + ((url == null) ? 0 : url.hashCode());
+        result = prime * result + ((usernamePasswordCredentialsId == null) ? 0 : usernamePasswordCredentialsId.hashCode());
+        result = prime * result + ((clientCertificateCredentialsId == null) ? 0 : clientCertificateCredentialsId.hashCode());
         result = prime * result + Boolean.hashCode(skipCertificateValidation);
         return result;
     }
@@ -229,23 +231,22 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     @Override
     public String toString() {
         return "ElasticSearchAuditLogger{" +
-                "uri='" + uri + "'" +
-                ", username='" + username + "'" +
-                ", password='" + password + "'" +
-                ", customServerCertificateId='" + customServerCertificateId + "'" +
+                "url='" + url + "'" +
+                ", usernamePasswordCredentialsId='" + usernamePasswordCredentialsId + "'" +
+                ", clientCertificateCredentialsId='" + clientCertificateCredentialsId + "'" +
                 ", skipCertificateValidation='" + skipCertificateValidation + "'" +
                 "}";
     }
 
     class ElasticSearchSender {
-    	private final CloseableHttpClient httpClient;
+        private final CloseableHttpClient httpClient;
         private final Range<Integer> successCodes = closedOpen(200,300);
 
-        private final URI uri;
+        private final String url;
         private final String auth;
 
-        public ElasticSearchSender(URI uri, String username, String password, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
-            this.uri = uri;
+        public ElasticSearchSender(String url, String username, String password, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
+            this.url = url;
             if (StringUtils.isNotBlank(username)) {
                 auth = Base64.encodeBase64String((username + ":" + StringUtils.defaultString(password)).getBytes(StandardCharsets.UTF_8));
             } else {
@@ -284,7 +285,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
 
         HttpPost getHttpPost(String data) {
-            HttpPost postRequest = new HttpPost(uri);
+            HttpPost postRequest = new HttpPost(url);
             // char encoding is set to UTF_8 since this request posts a JSON string
             JSONObject payload = new JSONObject();
             payload.put("message", data);
@@ -308,12 +309,12 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 try {
                     stream.print("HTTP error code: ");
                     stream.println(response.getStatusLine().getStatusCode());
-                    stream.print("URI: ");
-                    stream.println(uri.toString());
+                    stream.print("URL: ");
+                    stream.println(url.toString());
                     stream.println("RESPONSE: " + response.toString());
                     response.getEntity().writeTo(stream);
                 } catch (IOException e) {
-                	stream.println(ExceptionUtils.getStackTrace(e));
+                    stream.println(ExceptionUtils.getStackTrace(e));
                 }
                 stream.flush();
                 return byteStream.toString(StandardCharsets.UTF_8.name());
@@ -335,18 +336,45 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             return "Elastic Search server";
         }
 
-        public ListBoxModel doFillCustomServerCertificateIdItems(
-            @AncestorInPath Item item,
-            @QueryParameter String customServerCertificateId,
-            @QueryParameter String uri) {
-            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(uri).build();
-            return new StandardListBoxModel().includeEmptyValue().includeAs(ACL.SYSTEM, item,
-            		StandardCertificateCredentials.class, domainRequirements);
+        public ListBoxModel doFillUsernamePasswordCredentialsIdItems(
+            @QueryParameter String usernamePasswordCredentialsId,
+            @QueryParameter String url) {
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return new StandardListBoxModel().includeCurrentValue(usernamePasswordCredentialsId);
+            }
+            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(url).build();
+            return new StandardListBoxModel()
+                    .includeEmptyValue()
+                    .includeMatchingAs(
+                            ACL.SYSTEM,
+                            Jenkins.getInstance(),
+                            StandardCredentials.class,
+                            domainRequirements,
+                            CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class)))
+                    .includeCurrentValue(usernamePasswordCredentialsId);
         }
 
-        public FormValidation doCheckUri(@QueryParameter("value") String value) {
+        public ListBoxModel doFillClientCertificateCredentialsIdItems(
+            @QueryParameter String clientCertificateCredentialsId,
+            @QueryParameter String url) {
+            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+                return new StandardListBoxModel().includeCurrentValue(clientCertificateCredentialsId);
+            }
+            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(url).build();
+            return new StandardListBoxModel()
+                    .includeEmptyValue()
+                    .includeMatchingAs(
+                            ACL.SYSTEM,
+                            Jenkins.getInstance(),
+                            StandardCertificateCredentials.class,
+                            domainRequirements,
+                            CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardCertificateCredentials.class)))
+                    .includeCurrentValue(clientCertificateCredentialsId);
+        }
+
+        public FormValidation doCheckUrl(@QueryParameter("value") String value) {
             if (StringUtils.isBlank(value)) {
-                return FormValidation.warning("URI must be set");
+                return FormValidation.warning("URL must be set");
             }
             try {
                 URL url = new URL(value);
