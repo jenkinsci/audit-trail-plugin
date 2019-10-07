@@ -41,7 +41,6 @@ import java.util.regex.PatternSyntaxException;
 
 import static hudson.init.InitMilestone.PLUGINS_PREPARED;
 
-
 /**
  * Servlet filter to watch requests and log those we are interested in.
  * @author Alan Harder
