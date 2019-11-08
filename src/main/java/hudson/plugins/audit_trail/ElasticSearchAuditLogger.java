@@ -85,10 +85,13 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     @Override
     public void log(String event) {
         if (elasticSearchSender == null) {
-            LOGGER.log(Level.FINER, "skip log {0}, elasticSearchSender not configured", event);
-            return;
+            configure();
+            if (elasticSearchSender == null) {
+                LOGGER.log(Level.FINER, "skip log {0}, elasticSearchSender not configured", event);
+                return;
+            }
         }
-        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to Elastic Search server {1}", new Object[]{event, elasticSearchSender});
+        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to Elastic Search server {1}", new Object[]{event, elasticSearchSender.getUrl()});
         try {
             elasticSearchSender.sendMessage(event);
         } catch (IOException e) {
@@ -123,7 +126,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 clientKeyStorePassword = certificateCredentials.getPassword().getPlainText();
                 LOGGER.fine("Client certificate keystore loaded");
             } else {
-                LOGGER.fine("Unable to find certificate credentials: " + clientCertificateCredentialsId);
+                LOGGER.log(Level.SEVERE, "Unable to find certificate credentials: " + clientCertificateCredentialsId + " - Not creating ElasticSearchSender");
+                return;
             }
         }
         // Create the sender for Elastic Search
@@ -255,6 +259,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             httpClient = createHttpClient(clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
         }
 
+        public String getUrl() {
+            return url;
+        }
+
         private CloseableHttpClient createHttpClient(KeyStore keyStore, String keyStorePassword, boolean skipCertificateValidation)
                 throws IOException, GeneralSecurityException {
             TrustStrategy trustStrategy = null;
@@ -280,6 +288,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             try (CloseableHttpResponse response = httpClient.execute(post)) {
                 if (!successCodes.contains(response.getStatusLine().getStatusCode())) {
                     throw new IOException(this.getErrorMessage(response));
+                } else {
+                    LOGGER.log(Level.FINE, "Response: {0}", response.toString());
                 }
             }
         }
@@ -305,7 +315,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             try {
                 byteStream = new ByteArrayOutputStream();
                 stream = new PrintStream(byteStream, true, StandardCharsets.UTF_8.name());
-
                 try {
                     stream.print("HTTP error code: ");
                     stream.println(response.getStatusLine().getStatusCode());
