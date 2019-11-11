@@ -85,6 +85,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     @Override
     public void log(String event) {
         if (elasticSearchSender == null) {
+            // Create the sender because it might not have been created when Jenkins started
+            // The reason for it not being created seems to be because the credentials have not been loaded yet
             configure();
             if (elasticSearchSender == null) {
                 LOGGER.log(Level.FINER, "skip log {0}, elasticSearchSender not configured", event);
@@ -153,7 +155,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
             CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class,
                 Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
-          CredentialsMatchers.withId(credentials)
+            CredentialsMatchers.withId(credentials)
         );
     }
 
