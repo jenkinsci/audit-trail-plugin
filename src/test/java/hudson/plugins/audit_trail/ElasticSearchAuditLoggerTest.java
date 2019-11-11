@@ -1,8 +1,5 @@
 package hudson.plugins.audit_trail;
 
-import org.apache.http.client.methods.HttpPost;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
