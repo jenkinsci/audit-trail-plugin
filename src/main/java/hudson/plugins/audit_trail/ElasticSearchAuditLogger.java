@@ -98,7 +98,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private String clientCertificateCredentialsId;
     private boolean skipCertificateValidation = false;
 
-    private transient ElasticSearchSender elasticSearchSender;
+    transient ElasticSearchSender elasticSearchSender;
 
     protected static final Logger LOGGER = Logger.getLogger(ElasticSearchAuditLogger.class.getName());
     private static final FastDateFormat DATE_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -237,6 +237,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         return "Elastic Search Logger";
     }
 
+    ElasticSearchSender getElasticSearchSender() {
+        return elasticSearchSender;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -291,6 +295,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         private final String url;
         private final String auth;
+        private final boolean skipCertificateValidation;
 
         public ElasticSearchSender(String url, String username, String password, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
             this.url = url;
@@ -299,11 +304,16 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             } else {
                 auth = null;
             }
+            this.skipCertificateValidation = skipCertificateValidation;
             httpClient = createHttpClient(clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
         }
 
         public String getUrl() {
             return url;
+        }
+
+        public boolean getSkipCertificateValidation() {
+            return skipCertificateValidation;
         }
 
         private CloseableHttpClient createHttpClient(KeyStore keyStore, String keyStorePassword, boolean skipCertificateValidation)
