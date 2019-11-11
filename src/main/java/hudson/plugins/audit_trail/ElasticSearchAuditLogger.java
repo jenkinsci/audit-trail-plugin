@@ -1,3 +1,27 @@
+/*
+ * The MIT License
+ *
+ * Copyright 2014 Barnes and Noble College
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package hudson.plugins.audit_trail;
 
 import static com.google.common.collect.Ranges.closedOpen;
@@ -60,6 +84,9 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 /**
+ * AuditLogger implementation to send audit logs to an Elastic Search server.
+ * Some code take from the Jenkins logstash plugin: https://github.com/jenkinsci/logstash-plugin
+ *
  * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/ElasticSearchAuditLogger/config.jelly</code>
  *
  * @author <a href="mailto:alexander.russell@sap.com">Alex Russell</a>
@@ -143,19 +170,29 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
     }
 
-    private StandardUsernamePasswordCredentials getUsernamePasswordCredentials(String credentials) {
+    /**
+     * Returns the usernamePassword credential with the specified id.
+     * @param credentialsId The id of the usernamePassword credential to find
+     * @return The credentials object or null if not found
+     */
+    private StandardUsernamePasswordCredentials getUsernamePasswordCredentials(String credentialsId) {
         return (StandardUsernamePasswordCredentials) CredentialsMatchers.firstOrNull(
             CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class,
                 Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
-          CredentialsMatchers.withId(credentials)
+          CredentialsMatchers.withId(credentialsId)
         );
     }
 
-    private StandardCertificateCredentials getCertificateCredentials(String credentials) {
+    /**
+     * Returns the certificate credential with the specified id.
+     * @param credentialsId The id of the certificate credential to find
+     * @return The credentials object or null if not found
+     */
+    private StandardCertificateCredentials getCertificateCredentials(String credentialsId) {
         return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
             CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class,
                 Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
-            CredentialsMatchers.withId(credentials)
+            CredentialsMatchers.withId(credentialsId)
         );
     }
 
@@ -244,6 +281,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 "}";
     }
 
+    /**
+     * Class to do the work of authenticating to the Elastic Search server and
+     * sending log messages to it.
+     */
     class ElasticSearchSender {
         private final CloseableHttpClient httpClient;
         private final Range<Integer> successCodes = closedOpen(200,300);
