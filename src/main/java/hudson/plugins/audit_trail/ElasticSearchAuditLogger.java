@@ -289,7 +289,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
      * Class to do the work of authenticating to the Elastic Search server and
      * sending log messages to it.
      */
-    class ElasticSearchSender {
+    static class ElasticSearchSender {
         private final CloseableHttpClient httpClient;
         private final Range<Integer> successCodes = closedOpen(200,300);
 
