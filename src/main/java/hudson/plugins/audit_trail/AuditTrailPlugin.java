@@ -23,7 +23,6 @@
  */
 package hudson.plugins.audit_trail;
 
-import hudson.BulkChange;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 
@@ -34,6 +33,8 @@ import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -80,16 +81,11 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+    public boolean configure(StaplerRequest req, JSONObject formData) {
         // readResolve makes sure loggers is initialized, so it should never be null.
         // TODO this should probably be moved somewhere else
         loggers.forEach(AuditLogger::cleanUp);
-        try (BulkChange bc = new BulkChange(this)) {
-            req.bindJSON(this, formData);
-            bc.commit();
-        } catch (IOException e) {
-            throw new FormException("Failed to apply configuration", e, null);
-        }
+        req.bindJSON(this, formData);
         applySettings();
         return true;
     }
@@ -141,6 +137,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     /**
      * @deprecated as of 2.6
      **/
+    @Restricted(DoNotUse.class)
     @Deprecated
     public void onFinalized(Run run) {
         LOGGER.warning("AuditTrailPlugin#onFinalized does nothing anymore, please update your script");
@@ -149,6 +146,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     /**
      * @deprecated as of 2.6
      **/
+    @Restricted(DoNotUse.class)
     @Deprecated
     public void onFinalized(AbstractBuild build) {
         LOGGER.warning("AuditTrailPlugin#onFinalized does nothing anymore, please update your script");

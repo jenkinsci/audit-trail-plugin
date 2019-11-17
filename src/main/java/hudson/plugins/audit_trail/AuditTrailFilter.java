@@ -123,10 +123,15 @@ public class AuditTrailFilter implements Filter {
     }
 
     private void onRequest(String uri, String extra, String username) {
-        if (configuration.isStarted()) {
-            for (AuditLogger logger :  configuration.getLoggers()) {
-                logger.log(uri + extra + " by " + username);
+        if (configuration != null) {
+            if (configuration.isStarted()) {
+                for (AuditLogger logger :  configuration.getLoggers()) {
+                    logger.log(uri + extra + " by " + username);
+                }
+            } else {
+                LOGGER.warning("Plugin configuration not properly injected, please report an issue to the Audit Trail Plugin");
             }
         }
+
     }
 }
