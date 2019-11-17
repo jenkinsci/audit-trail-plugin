@@ -1,0 +1,93 @@
+= Changelog
+
+== Newer versions
+See https://github.com/jenkinsci/audit-trail-plugin/releases[GitHub releases].
+
+== Version 2.4
+Release date: _Jan 11, 2019_
+
+* Log file logger for Audit trail plugin leaks open file descriptors
+(https://issues.jenkins-ci.org/browse/JENKINS-44129[JENKINS-44129])
+* Fixes default date format to show time
+(https://issues.jenkins-ci.org/browse/JENKINS-55376[JENKINS-55376])
+
+== Version 2.3
+Release date: _May 28, 2018_
+
+* Jenkins minimal version bumped to 2.60.3
+* Add a log prefix feature
+* Fix JEP-200 issue in ConsoleAuditLogger
+(https://issues.jenkins-ci.org/browse/JENKINS-51331[JENKINS-51331])
+
+== Version 2.2
+Release date: Aug 26, 2015
+
+* Add stop, restart, prepare for shutdown as default filter
+(https://issues.jenkins-ci.org/browse/JENKINS-19669[JENKINS-19669])
+* Added project enable/disable to default pattern
+* Added millis to the File audit logger message
+(https://issues.jenkins-ci.org/browse/JENKINS-29159[JENKINS-29159])
+
+== Version 2.1
+Release date: _Sept 16, 2014_
+
+* Add audit message with build start time, duration, node and cause 
+
+== Version 2.0
+Release date: _April 23, 2014_
+
+* Major refactoring to support multiple outputs
+* Add Syslog output
+* Add Console output
+
+== Version 1.8
+Release date: _May 31, 2013_
+
+* Fixed security vulnerability.
+
+== Version 1.7
+Release date: _Aug 3, 2011_
+
+* Log IP address for anonymous users.
+(https://issues.jenkins-ci.org/browse/JENKINS-10559[JENKINS-10559])
+
+== Version 1.6
+Release date: _Feb 24, 2011_
+
+* Rerelease 1.5 to properly set required Jenkins version.
+
+== Version 1.5
+Release date: _Feb 15, 2011_
+
+* Set a default value for log location.
+* Translation update (German)
+
+== Version 1.4
+Release date: _Nov 21, 2009_
+
+* For queue item URLs, add URL for that item's job in the log entry.
+* Update uses of deprecated APIs
+
+== Version 1.3
+Release date: _Mar 03, 2009_
+
+* Updated to work with Hudson 1.288 and higher. Use version 1.2 for
+older Hudson versions.
+* Fix so build triggers also appear in Manage / System Log section.
+
+== Version 1.2
+Release date: _Feb 13, 2009_
+
+* Add option to log how each build is triggered (on Hudson 1.283 or
+higher; older versions just say "Started").
+* Add some more URI patterns to log by default.
+
+== Version 1.1
+Release date: _Jan 16, 2009_
+
+* Minor log setup fixes.
+
+== Version 1.0
+Release date: _Jan 15, 2009_
+
+* Initial release.
