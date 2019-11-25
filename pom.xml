@@ -47,7 +47,7 @@
                 <plugin>
                     <groupId>org.jenkins-ci.tools</groupId>
                     <artifactId>maven-hpi-plugin</artifactId>
-                    <version>2.5</version>
+                    <version>3.10</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -55,7 +55,7 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.10</version>
                 <configuration>
                     <loggers>
                         <hudson.plugins.audit_trail>FINE</hudson.plugins.audit_trail>
