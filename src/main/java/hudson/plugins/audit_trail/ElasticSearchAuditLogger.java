@@ -446,7 +446,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 }
 
                 if(StringUtils.isBlank(url.getPath()) || url.getPath().trim().matches("^\\/+$")) {
-                    return FormValidation.warning("Elastic Search requires a key to be able to index the logs.");
+                    return FormValidation.warning("Elastic Search requires an index name and document type to be able to index the logs.  eg. https://elastic.mydomain.com/myindex/jenkinslog/");
                 }
 
                 url.toURI();
