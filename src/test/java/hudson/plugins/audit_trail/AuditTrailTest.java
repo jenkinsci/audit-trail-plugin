@@ -30,7 +30,8 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
+
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class AuditTrailTest {
         form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
         j.submit(form);
 
-        AuditTrailPlugin plugin = Jenkins.getInstance().getPlugin(AuditTrailPlugin.class);
+        AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
         assertEquals("log path", logFile.getPath(), logger.getLog());
         assertEquals("log size", 1, logger.getLimit());

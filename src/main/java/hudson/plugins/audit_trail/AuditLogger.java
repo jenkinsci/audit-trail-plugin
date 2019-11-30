@@ -1,14 +1,15 @@
 package hudson.plugins.audit_trail;
 
+import hudson.DescriptorExtensionList;
 import hudson.ExtensionPoint;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
-import java.io.IOException;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
+ * @author Pierre Beitz
  */
 public abstract class AuditLogger implements Describable<AuditLogger>, ExtensionPoint {
 
@@ -16,7 +17,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
 
     public abstract void log(String event);
 
-    public Descriptor getDescriptor() {
+    public Descriptor<AuditLogger> getDescriptor() {
         return Jenkins.getInstance().getDescriptorOrDie(getClass());
     }
 
@@ -31,4 +32,10 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
         // default does nothing
     }
 
+    /**
+     * Returns all the registered {@link AuditLogger} descriptors.
+     */
+    public static DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> all() {
+        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
+    }
 }

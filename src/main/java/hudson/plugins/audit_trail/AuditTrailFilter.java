@@ -23,9 +23,14 @@
  */
 package hudson.plugins.audit_trail;
 
+import com.google.inject.Injector;
+import hudson.Extension;
+import hudson.init.Initializer;
 import hudson.model.User;
+import hudson.util.PluginServletFilter;
 import jenkins.model.Jenkins;
 
+import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -34,21 +39,33 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static hudson.init.InitMilestone.PLUGINS_PREPARED;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
  * @author Alan Harder
+ * @author Pierre Beitz
  */
+@Extension
 public class AuditTrailFilter implements Filter {
 
     private static final Logger LOGGER = Logger.getLogger(AuditTrailFilter.class.getName());
 
     private static Pattern uriPattern = null;
 
-    private final AuditTrailPlugin plugin;
+    @Inject
+    private AuditTrailPlugin configuration;
 
+    /**
+     * @deprecated as of 2.6
+     **/
+    @Deprecated
     public AuditTrailFilter(AuditTrailPlugin plugin) {
-        this.plugin = plugin;
+        this.configuration = plugin;
+    }
+
+    public AuditTrailFilter() {
+        // used by the injector
     }
 
     public void init(FilterConfig fc) {
@@ -85,7 +102,7 @@ public class AuditTrailFilter implements Filter {
             if(LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
 
-            plugin.onRequest(uri, extra, username);
+            onRequest(uri, extra, username);
         } else {
             LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
         }
@@ -93,5 +110,28 @@ public class AuditTrailFilter implements Filter {
     }
 
     public void destroy() {
+    }
+
+    // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
+    @Initializer(after = PLUGINS_PREPARED)
+    public static void init() throws ServletException {
+        Injector injector = Jenkins.getInstance().getInjector();
+        if (injector == null) {
+            return;
+        }
+        PluginServletFilter.addFilter(injector.getInstance(AuditTrailFilter.class));
+    }
+
+    private void onRequest(String uri, String extra, String username) {
+        if (configuration != null) {
+            if (configuration.isStarted()) {
+                for (AuditLogger logger :  configuration.getLoggers()) {
+                    logger.log(uri + extra + " by " + username);
+                }
+            } else {
+                LOGGER.warning("Plugin configuration not properly injected, please report an issue to the Audit Trail Plugin");
+            }
+        }
+
     }
 }

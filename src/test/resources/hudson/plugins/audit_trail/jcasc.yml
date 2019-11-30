@@ -1,0 +1,20 @@
+unclassified:
+  audit-trail:
+    logBuildCause: true
+    loggers:
+      - console:
+          dateFormat: "yyyy-MM-dd HH:mm:ss:SSS"
+          logPrefix: "test"
+          output: STD_OUT
+      - logFile:
+          count: 10
+          limit: 666
+          log: "/log/location"
+      - syslog:
+          appName: "jenkins"
+          facility: "DAEMON"
+          messageFormat: "RFC_5424"
+          messageHostname: "hostname"
+          syslogServerHostname: "syslog-server"
+          syslogServerPort: 514
+    pattern: ".*/(?:configSubmit|doUninstall|doDelete|postBuildResult|enable|disable|cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|cancelQuietDown|quietDown|restart|exit|safeExit)"

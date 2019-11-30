@@ -2,17 +2,18 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <f:section title="${%Audit Trail}">
     <f:entry title="${%Loggers}">
+        <j:invokeStatic var="loggerDescriptors" className="hudson.plugins.audit_trail.AuditLogger" method="all"/>
         <f:hetero-list name="loggers" hasHeader="true"
-            descriptors="${it.getLoggerDescriptors()}" items="${it.loggers}"
+            descriptors="${loggerDescriptors}" items="${descriptor.loggers}"
             addCaption="${%Add Logger}"/>
     </f:entry>
     <f:advanced>
       <f:entry title="${%URL Patterns to Log}">
-        <f:textbox name="pattern" value="${it.pattern}"
-         checkUrl="'${rootURL}/plugin/audit-trail/regexCheck?value='+encode(this.value)"/>
+        <f:textbox name="pattern" value="${descriptor.pattern}"
+         checkUrl="'descriptorByName/AuditTrailPlugin/regexCheck?value='+encode(this.value)"/>
       </f:entry>
       <f:entry title="${%Log how each build is triggered}">
-        <f:checkbox name="logBuildCause" checked="${it.logBuildCause}"/>
+        <f:checkbox name="logBuildCause" checked="${descriptor.logBuildCause}"/>
       </f:entry>
     </f:advanced>
   </f:section>

@@ -24,75 +24,104 @@
 package hudson.plugins.audit_trail;
 
 import hudson.DescriptorExtensionList;
-import hudson.Plugin;
-import hudson.model.*;
-import hudson.model.Descriptor.FormException;
+import hudson.Extension;
+
+import hudson.model.AbstractBuild;
+import hudson.model.Descriptor;
+import hudson.model.Run;
 import hudson.util.FormValidation;
-import hudson.util.PluginServletFilter;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
+ *
  * @author Alan Harder
+ * @author Pierre Beitz
  */
-public class AuditTrailPlugin extends Plugin {
+@Symbol("audit-trail")
+@Extension
+public class AuditTrailPlugin extends GlobalConfiguration {
+
+    private static final Logger LOGGER = Logger.getLogger(AuditTrailPlugin.class.getName());
     private String pattern = ".*/(?:configSubmit|doDelete|postBuildResult|enable|disable|"
-      + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|"
-      + "cancelQuietDown|quietDown|restart|exit|safeExit)";
+            + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|"
+            + "cancelQuietDown|quietDown|restart|exit|safeExit)";
     private boolean logBuildCause = true;
 
-    private List<AuditLogger> loggers = new ArrayList<AuditLogger>();
+    private List<AuditLogger> loggers = new ArrayList<>();
 
     private transient boolean started;
 
     private transient String log;
-    private transient int limit = 1, count = 1;
 
     public String getPattern() { return pattern; }
     public boolean getLogBuildCause() { return logBuildCause; }
     public List<AuditLogger> getLoggers() { return loggers; }
 
-    @Override public void start() throws Exception {
-        // Set a default value; will be overridden by load() once customized:
+    public AuditTrailPlugin() {
         load();
-        applySettings();
-
-        // Add Filter to watch all requests and log matching ones
-        PluginServletFilter.addFilter(new AuditTrailFilter(this));
     }
 
-    @Override public void configure(StaplerRequest req, JSONObject formData)
-            throws IOException, ServletException, FormException {
-        pattern = formData.optString("pattern");
-        logBuildCause = formData.optBoolean("logBuildCause", true);
+    @Override
+    public boolean configure(StaplerRequest req, JSONObject formData) {
         // readResolve makes sure loggers is initialized, so it should never be null.
+        // TODO this should probably be moved somewhere else
         loggers.forEach(AuditLogger::cleanUp);
-        loggers = Descriptor.newInstancesFromHeteroList(
-                req, formData, "loggers", getLoggerDescriptors());
-        save();
+        req.bindJSON(this, formData);
         applySettings();
+        return true;
     }
 
+    @DataBoundSetter
+    public void setPattern(String pattern) {
+        this.pattern = Optional.ofNullable(pattern).orElse("");
+        save();
+    }
+
+    @DataBoundSetter
+    public void setLogBuildCause(boolean logBuildCause) {
+        this.logBuildCause = logBuildCause;
+        save();
+    }
+
+    /**
+     * @deprecated as of 2.6
+     **/
+    @Deprecated
     public DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> getLoggerDescriptors() {
-        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
+        return AuditLogger.all();
     }
 
+    @DataBoundSetter
+    public void setLoggers(List<AuditLogger> loggers) {
+        this.loggers = Optional.ofNullable(loggers).orElse(Collections.emptyList());
+    }
 
+    @PostConstruct
     private void applySettings() {
         try {
             AuditTrailFilter.setPattern(pattern);
+        } catch (PatternSyntaxException ex) {
+            ex.printStackTrace();
         }
-        catch (PatternSyntaxException ex) { ex.printStackTrace(); }
 
         for (AuditLogger logger : loggers) {
             logger.configure();
@@ -100,72 +129,28 @@ public class AuditTrailPlugin extends Plugin {
         started = true;
     }
 
-    /* package */ void onStarted(Run run) {
-        if (this.started) {
-            StringBuilder buf = new StringBuilder(100);
-            for (CauseAction action : run.getActions(CauseAction.class)) {
-                for (Cause cause : action.getCauses()) {
-                    if (buf.length() > 0) buf.append(", ");
-                    buf.append(cause.getShortDescription());
-                }
-            }
-            if (buf.length() == 0) buf.append("Started");
-
-            for (AuditLogger logger : loggers) {
-                logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
-            }
-
-        }
+    // TODO keeping this logic while refactoring, I'm not sure this is necessary
+    boolean isStarted() {
+        return started;
     }
 
+    /**
+     * @deprecated as of 2.6
+     **/
+    @Restricted(DoNotUse.class)
+    @Deprecated
     public void onFinalized(Run run) {
-        if (run instanceof AbstractBuild) {
-            onFinalized((AbstractBuild) run);
-        }
-
+        LOGGER.warning("AuditTrailPlugin#onFinalized does nothing anymore, please update your script");
     }
 
+    /**
+     * @deprecated as of 2.6
+     **/
+    @Restricted(DoNotUse.class)
+    @Deprecated
     public void onFinalized(AbstractBuild build) {
-        if (this.started) {
-            StringBuilder causeBuilder = new StringBuilder(100);
-            for (CauseAction action : build.getActions(CauseAction.class)) {
-                for (Cause cause : action.getCauses()) {
-                    if (causeBuilder.length() > 0) causeBuilder.append(", ");
-                    causeBuilder.append(cause.getShortDescription());
-                }
-            }
-            if (causeBuilder.length() == 0) causeBuilder.append("Started");
-
-            for (AuditLogger logger : loggers) {
-                String message = build.getFullDisplayName() +
-                        " " + causeBuilder.toString() +
-                        " on node " + buildNodeName(build) +
-                        " started at " + build.getTimestampString2() +
-                        " completed in " + build.getDuration() + "ms" +
-                        " completed: " + build.getResult();
-                logger.log(message);
-            }
-
-        }
+        LOGGER.warning("AuditTrailPlugin#onFinalized does nothing anymore, please update your script");
     }
-
-    private String buildNodeName(AbstractBuild build) {
-        Node node = build.getBuiltOn();
-        if (node != null) {
-            return node.getDisplayName();
-        }
-
-        return "#unknown#";
-    }
-
-    /* package */ void onRequest(String uri, String extra, String username) {
-        if (this.started) {
-            for (AuditLogger logger : loggers) {
-                logger.log(uri + extra + " by " + username);
-            }
-        }
-    }
-
 
     /**
      * Backward compatibility
@@ -173,9 +158,9 @@ public class AuditTrailPlugin extends Plugin {
     private Object readResolve() {
         if (log != null) {
             if (loggers == null) {
-                loggers = new ArrayList<AuditLogger>();
+                loggers = new ArrayList<>();
             }
-            LogFileAuditLogger logger = new LogFileAuditLogger(log, limit, count);
+            LogFileAuditLogger logger = new LogFileAuditLogger(log, 1, 1);
             if (!loggers.contains(logger))
                 loggers.add(logger);
             log = null;
@@ -192,11 +177,10 @@ public class AuditTrailPlugin extends Plugin {
         try {
             Pattern.compile(value);
             return FormValidation.ok();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             return FormValidation.errorWithMarkup("Invalid <a href=\""
-                + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
-                + "\">regular expression</a> (" + ex.getMessage() + ")");
+                    + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
+                    + "\">regular expression</a> (" + ex.getMessage() + ")");
         }
     }
 
