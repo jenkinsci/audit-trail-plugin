@@ -26,11 +26,13 @@ package hudson.plugins.audit_trail;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 
+import hudson.XmlFile;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
 import hudson.model.Run;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -41,6 +43,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -184,4 +187,8 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         }
     }
 
+    @Override
+    protected XmlFile getConfigFile() {
+        return new XmlFile(new File(Jenkins.get().getRootDir(),"audit-trail.xml"));
+    }
 }
