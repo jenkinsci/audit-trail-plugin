@@ -68,6 +68,7 @@ public class AuditTrailTest {
     private static final String LOG_LOCATION_INPUT_NAME = "_.log";
     private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
     private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
+    private static final String PATTERN_INPUT_NAME= "pattern";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
 
@@ -82,15 +83,7 @@ public class AuditTrailTest {
         // Configure plugin
         File logFile = new File(tmpDir.getRoot(), "test.log");
         JenkinsRule.WebClient wc = j.createWebClient();
-        HtmlPage configure = wc.goTo("configure");
-        HtmlForm form = configure.getFormByName("config");
-        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
-        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
-        wc.waitForBackgroundJavaScript(TIMEOUT);
-        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
-        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
-        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
-        j.submit(form);
+        configurePlugin(j, logFile, wc);
 
         AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
@@ -105,7 +98,20 @@ public class AuditTrailTest {
         // Then
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), Charset.forName("UTF-8"));
         assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
-              + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
+            + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
+    }
+
+    static void configurePlugin(JenkinsRule j, File logFile, JenkinsRule.WebClient wc) throws Exception {
+        HtmlPage configure = wc.goTo("configure");
+        HtmlForm form = configure.getFormByName("config");
+        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
+        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
+        wc.waitForBackgroundJavaScript(TIMEOUT);
+        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
+        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
+        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
+        form.getInputByName(PATTERN_INPUT_NAME).setValueAttribute(".*/(?:enable|cancelItem)");
+        j.submit(form);
     }
 
     @Issue("JENKINS-44129")
@@ -129,7 +135,7 @@ public class AuditTrailTest {
 
         // Then
         assertEquals("Only two files should be present, the file opened by the FileHandler and its lock",
-              2, tmpDir.getRoot().list().length);
+            2, tmpDir.getRoot().list().length);
     }
 
     @Issue("JENKINS-60421")
