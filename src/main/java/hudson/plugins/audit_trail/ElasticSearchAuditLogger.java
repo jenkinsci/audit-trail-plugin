@@ -104,8 +104,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private static final FastDateFormat DATE_FORMATTER = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ssZ");
 
     @DataBoundConstructor
-    public ElasticSearchAuditLogger(String esServerUrl, boolean skipCertificateValidation) {
-        this.url = esServerUrl;
+    public ElasticSearchAuditLogger(String url, boolean skipCertificateValidation) {
+        this.url = url;
         this.skipCertificateValidation = skipCertificateValidation;
     }
 

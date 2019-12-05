@@ -7,7 +7,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -35,7 +35,7 @@ public class ElasticSearchAuditLoggerTest {
 
         // Then
         // submit configuration page without any errors
-        AuditTrailPlugin plugin = Jenkins.getInstance().getPlugin(AuditTrailPlugin.class);
+        AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
         assertEquals("amount of loggers", 1, plugin.getLoggers().size());
         AuditLogger logger = plugin.getLoggers().get(0);
         assertTrue("ConsoleAuditLogger should be configured", logger instanceof ElasticSearchAuditLogger);

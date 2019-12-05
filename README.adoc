@@ -50,6 +50,12 @@ Primarily intended for debugging purpose.
 
 image:docs/images/jenkins-audit-trail-console-logger.png[image,width=400]
 
+=== Elastic Search logger
+
+Send audit logs to an Elastic Search server
+
+image:docs/images/jenkins-audit-trail-elastic-search-logger.png[image,width=400]
+
 == Changelog
 ifdef::env-github,env-browser[:outfilesuffix: .adoc]
 
