@@ -53,15 +53,6 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <version>2.5</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
@@ -70,6 +61,7 @@
                     <loggers>
                         <hudson.plugins.audit_trail>FINE</hudson.plugins.audit_trail>
                     </loggers>
+                    <minimumJavaVersion>8</minimumJavaVersion>
                 </configuration>
             </plugin>
         </plugins>
