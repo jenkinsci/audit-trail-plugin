@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static hudson.init.InitMilestone.PLUGINS_PREPARED;
+import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
@@ -113,7 +113,7 @@ public class AuditTrailFilter implements Filter {
     }
 
     // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
-    @Initializer(after = PLUGINS_PREPARED)
+    @Initializer(after = EXTENSIONS_AUGMENTED)
     public static void init() throws ServletException {
         Injector injector = Jenkins.getInstance().getInjector();
         if (injector == null) {
