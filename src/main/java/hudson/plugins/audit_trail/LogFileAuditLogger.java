@@ -31,6 +31,12 @@ public class LogFileAuditLogger extends AuditLogger {
         this.log = log;
         this.limit = limit;
         this.count = count;
+        configure();
+    }
+
+    private Object readResolve() {
+        configure();
+        return this;
     }
 
     @Override
@@ -71,8 +77,7 @@ public class LogFileAuditLogger extends AuditLogger {
         return result;
     }
 
-    @Override
-    public void configure() {
+    private void configure() {
         // looks like https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6244047 is somehow still there
         // there is no way for us to know before hand what path we are looking to create as it would
         // mean having access to FileHandler#generate so either reflexion or catching the exception and retrieving

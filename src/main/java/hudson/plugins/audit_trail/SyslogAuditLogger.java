@@ -48,6 +48,12 @@ public class SyslogAuditLogger extends AuditLogger {
         this.messageHostname = trimToNull(messageHostname);
         this.facility = defaultValue(Facility.fromLabel(trimToNull(facility)), DEFAULT_FACILITY);
         this.messageFormat = MessageFormat.valueOf(defaultValue(trimToNull(messageFormat), DEFAULT_MESSAGE_FORMAT.toString()));
+        configure();
+    }
+
+    private Object readResolve() {
+        configure();
+        return this;
     }
 
     @Override
@@ -67,8 +73,7 @@ public class SyslogAuditLogger extends AuditLogger {
         }
     }
 
-    @Override
-    public void configure() {
+    private void configure() {
         if (syslogServerHostname == null || syslogServerHostname.isEmpty()) {
             LOGGER.fine("SyslogLogger not configured");
             return;
