@@ -77,7 +77,7 @@ public class AuditTrailFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
-            throws IOException, ServletException {
+          throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         String uri;
         if (req.getPathInfo() == null) {
@@ -90,16 +90,16 @@ public class AuditTrailFilter implements Filter {
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null ? user.getId() : req.getRemoteAddr(),
-                   extra = "";
+                  extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) try {
                 extra = " (" + Jenkins.getInstance().getQueue().getItem(Integer.parseInt(
-                        uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
+                      uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
             } catch (Exception e) {
                 LOGGER.log(Level.FINEST, "Error occurred during parsing queue item", e);
             }
 
-            if(LOGGER.isLoggable(Level.FINE))
+            if (LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
 
             onRequest(uri, extra, username);
@@ -124,14 +124,9 @@ public class AuditTrailFilter implements Filter {
 
     private void onRequest(String uri, String extra, String username) {
         if (configuration != null) {
-            if (configuration.isStarted()) {
-                for (AuditLogger logger :  configuration.getLoggers()) {
-                    logger.log(uri + extra + " by " + username);
-                }
-            } else {
-                LOGGER.warning("Plugin configuration not properly injected, please report an issue to the Audit Trail Plugin");
+            for (AuditLogger logger : configuration.getLoggers()) {
+                logger.log(uri + extra + " by " + username);
             }
         }
-
     }
 }

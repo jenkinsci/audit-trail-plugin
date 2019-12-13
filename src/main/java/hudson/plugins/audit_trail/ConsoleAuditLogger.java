@@ -41,6 +41,12 @@ public class ConsoleAuditLogger extends AuditLogger {
 
         // validate the dataFormat
         new SimpleDateFormat(dateFormat);
+        configure();
+    }
+
+    private Object readResolve() {
+        configure();
+        return this;
     }
 
     @Override
@@ -50,8 +56,7 @@ public class ConsoleAuditLogger extends AuditLogger {
         }
     }
 
-    @Override
-    public void configure() {
+    private void configure() {
         synchronized (output) {
             switch (output) {
                 case STD_ERR:
