@@ -1,0 +1,15 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<hudson.plugins.audit__trail.AuditTrailPlugin plugin="audit-trail">
+    <pattern>
+        .*/(?:configSubmit|doDelete|postBuildResult|enable|disable|cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|cancelQuietDown|quietDown|restart|exit|safeExit|cancelItem|updateSubmit)
+    </pattern>
+    <logBuildCause>true</logBuildCause>
+    <loggers>
+        <hudson.plugins.audit__trail.LogFileAuditLogger>
+            <log>/tmp/xml-logs-12848</log>
+            <limit>100</limit>
+            <count>5</count>
+            <logSeparator>;</logSeparator>
+        </hudson.plugins.audit__trail.LogFileAuditLogger>
+    </loggers>
+</hudson.plugins.audit__trail.AuditTrailPlugin>

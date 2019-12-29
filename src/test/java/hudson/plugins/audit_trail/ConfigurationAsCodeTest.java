@@ -46,6 +46,7 @@ public class ConfigurationAsCodeTest {
     assertEquals(10, ((LogFileAuditLogger) logger).getCount());
     assertEquals(666, ((LogFileAuditLogger) logger).getLimit());
     assertEquals("/log/location", ((LogFileAuditLogger) logger).getLog());
+    assertEquals(";", ((LogFileAuditLogger) logger).getLogSeparator());
 
     //third logger
     logger = plugin.getLoggers().get(2);
