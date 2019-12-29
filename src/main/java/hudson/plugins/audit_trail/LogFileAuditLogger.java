@@ -1,5 +1,6 @@
 package hudson.plugins.audit_trail;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -41,6 +42,9 @@ public class LogFileAuditLogger extends AuditLogger {
         configure();
     }
 
+    @SuppressFBWarnings(
+          value="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+          justification = "value can be null if no config file exists")
     private Object readResolve() {
         if(logSeparator == null) {
             logSeparator = DEFAULT_LOG_SEPARATOR;
