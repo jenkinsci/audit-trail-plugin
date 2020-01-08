@@ -10,6 +10,7 @@ unclassified:
           count: 10
           limit: 666
           log: "/log/location"
+          logSeparator: ";"
       - syslog:
           appName: "jenkins"
           facility: "DAEMON"

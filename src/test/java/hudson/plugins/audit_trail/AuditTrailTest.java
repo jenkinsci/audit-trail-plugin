@@ -48,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
+import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -68,6 +69,7 @@ public class AuditTrailTest {
     private static final String LOG_LOCATION_INPUT_NAME = "_.log";
     private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
     private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
+    private static final String LOG_FILE_LOG_SEPARATOR_INPUT_NAME = "_.logSeparator";
     private static final String PATTERN_INPUT_NAME= "pattern";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
@@ -110,6 +112,7 @@ public class AuditTrailTest {
         form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
         form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
         form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
+        form.getInputByName(LOG_FILE_LOG_SEPARATOR_INPUT_NAME).setValueAttribute(DEFAULT_LOG_SEPARATOR);
         form.getInputByName(PATTERN_INPUT_NAME).setValueAttribute(".*/(?:enable|cancelItem)");
         j.submit(form);
     }
@@ -167,11 +170,12 @@ public class AuditTrailTest {
         // the injected xml assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
-        AuditTrailPlugin plugin = load();
+        AuditTrailPlugin plugin = load("sample.xml", getClass());
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
         assertEquals("log path", "/tmp/xml-logs", logger.getLog());
         assertEquals("log size", 100, logger.getLimit());
         assertEquals("log count", 5, logger.getCount());
+        assertEquals("log separator", DEFAULT_LOG_SEPARATOR, logger.getLogSeparator());
         assertTrue("log build cause", plugin.getLogBuildCause());
 
         String message = "hello";
@@ -186,9 +190,9 @@ public class AuditTrailTest {
         // we need to properly inject those...
     }
 
-    private AuditTrailPlugin load() {
+    static AuditTrailPlugin load(String fileName, Class<?> clasz) {
         return (AuditTrailPlugin) Jenkins.XSTREAM2.fromXML(
-              getClass().getResource("sample.xml"));
+              clasz.getResource(fileName));
     }
 
     private void createJobAndPush() throws IOException, InterruptedException, ExecutionException {

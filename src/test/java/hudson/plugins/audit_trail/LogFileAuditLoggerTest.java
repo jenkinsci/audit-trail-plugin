@@ -25,7 +25,7 @@ public class LogFileAuditLoggerTest {
     @Test
     public void configuringAFileLoggerWithNonExistingParents() {
         Path logFile = folder.getRoot().toPath().resolve("subdirectory").resolve("file");
-        new LogFileAuditLogger(logFile.toString(), 5, 1);
+        new LogFileAuditLogger(logFile.toString(), 5, 1, null);
         Assert.assertTrue(logFile.toFile().exists());
     }
 }
