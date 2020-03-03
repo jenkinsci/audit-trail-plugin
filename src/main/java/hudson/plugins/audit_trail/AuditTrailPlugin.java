@@ -26,6 +26,7 @@ package hudson.plugins.audit_trail;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 
+import hudson.Util;
 import hudson.XmlFile;
 import hudson.model.AbstractBuild;
 import hudson.model.Descriptor;
@@ -169,9 +170,11 @@ public class AuditTrailPlugin extends GlobalConfiguration {
             Pattern.compile(value);
             return FormValidation.ok();
         } catch (Exception ex) {
+            // SECURITY-1722: As the exception message will contain the user input Pattern,
+            // it needs to be escaped to prevent an XSS attack
             return FormValidation.errorWithMarkup("Invalid <a href=\""
-                    + "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html"
-                    + "\">regular expression</a> (" + ex.getMessage() + ")");
+                    + "https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html"
+                    + "\">regular expression</a> (" + Util.escape(ex.getMessage()) + ")");
         }
     }
 
