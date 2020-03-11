@@ -1,14 +1,17 @@
 package hudson.plugins.audit_trail;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
@@ -19,18 +22,35 @@ import static java.util.logging.Level.CONFIG;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
+ * @author Pierre Beitz
  */
 public class LogFileAuditLogger extends AuditLogger {
 
     private static final Logger LOGGER = Logger.getLogger(LogFileAuditLogger.class.getName());
+    static final String DEFAULT_LOG_SEPARATOR=" ";
+    @Nonnull
+    private String logSeparator;
 
     private transient FileHandler handler;
 
     @DataBoundConstructor
-    public LogFileAuditLogger(String log, int limit, int count) {
+    public LogFileAuditLogger(String log, int limit, int count, String logSeparator) {
         this.log = log;
         this.limit = limit;
         this.count = count;
+        this.logSeparator = Optional.ofNullable(logSeparator).orElse(DEFAULT_LOG_SEPARATOR);
+        configure();
+    }
+
+    @SuppressFBWarnings(
+          value="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+          justification = "value can be null if no config file exists")
+    private Object readResolve() {
+        if(logSeparator == null) {
+            logSeparator = DEFAULT_LOG_SEPARATOR;
+        }
+        configure();
+        return this;
     }
 
     @Override
@@ -49,6 +69,11 @@ public class LogFileAuditLogger extends AuditLogger {
 
     public int getCount() { return count; }
 
+    @Nonnull
+    public String getLogSeparator() {
+        return logSeparator;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -58,6 +83,7 @@ public class LogFileAuditLogger extends AuditLogger {
 
         if (count != that.count) return false;
         if (limit != that.limit) return false;
+        if (!logSeparator.equals(that.logSeparator)) return false;
         if (log != null ? !log.equals(that.log) : that.log != null) return false;
 
         return true;
@@ -68,11 +94,11 @@ public class LogFileAuditLogger extends AuditLogger {
         int result = log != null ? log.hashCode() : 0;
         result = 31 * result + limit;
         result = 31 * result + count;
+        result = 31 * result + logSeparator.hashCode();
         return result;
     }
 
-    @Override
-    public void configure() {
+    private void configure() {
         // looks like https://bugs.java.com/bugdatabase/view_bug.do?bug_id=6244047 is somehow still there
         // there is no way for us to know before hand what path we are looking to create as it would
         // mean having access to FileHandler#generate so either reflexion or catching the exception and retrieving
@@ -91,11 +117,11 @@ public class LogFileAuditLogger extends AuditLogger {
             }
             if (h != null) {
                 h.setFormatter(new Formatter() {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa ");
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy h:mm:ss,SSS aa");
 
                     @Override
                     public synchronized String format(LogRecord record) {
-                        return dateFormat.format(new Date(record.getMillis()))
+                        return dateFormat.format(new Date(record.getMillis())) + getLogSeparator()
                                 + record.getMessage() + '\n';
                     }
                 });

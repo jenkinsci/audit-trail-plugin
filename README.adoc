@@ -35,6 +35,9 @@ patterns to describe the log file location as documented
 http://docs.oracle.com/javase/7/docs/api/java/util/logging/FileHandler.html[here]
 (`+%h+`, `+%g+`...).
 
+A separator can be set for the file logger in case further parsing of the file is done.
+Default separator is a space.
+
 === Syslog logger
 
 Send audit logs to a Syslog server.

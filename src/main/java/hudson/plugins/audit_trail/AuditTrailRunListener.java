@@ -27,43 +27,39 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        if (configuration.isStarted()) {
-            StringBuilder buf = new StringBuilder(100);
-            for (CauseAction action : run.getActions(CauseAction.class)) {
-                for (Cause cause : action.getCauses()) {
-                    if (buf.length() > 0) buf.append(", ");
-                    buf.append(cause.getShortDescription());
-                }
+        StringBuilder buf = new StringBuilder(100);
+        for (CauseAction action : run.getActions(CauseAction.class)) {
+            for (Cause cause : action.getCauses()) {
+                if (buf.length() > 0) buf.append(", ");
+                buf.append(cause.getShortDescription());
             }
-            if (buf.length() == 0) buf.append("Started");
+        }
+        if (buf.length() == 0) buf.append("Started");
 
-            for (AuditLogger logger : configuration.getLoggers()) {
-                logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
-            }
+        for (AuditLogger logger : configuration.getLoggers()) {
+            logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + buf.toString());
         }
     }
 
     @Override
     public void onFinalized(Run run) {
-        if (configuration.isStarted()) {
-            StringBuilder causeBuilder = new StringBuilder(100);
-            for (CauseAction action : run.getActions(CauseAction.class)) {
-                for (Cause cause : action.getCauses()) {
-                    if (causeBuilder.length() > 0) causeBuilder.append(", ");
-                    causeBuilder.append(cause.getShortDescription());
-                }
+        StringBuilder causeBuilder = new StringBuilder(100);
+        for (CauseAction action : run.getActions(CauseAction.class)) {
+            for (Cause cause : action.getCauses()) {
+                if (causeBuilder.length() > 0) causeBuilder.append(", ");
+                causeBuilder.append(cause.getShortDescription());
             }
-            if (causeBuilder.length() == 0) causeBuilder.append("Started");
+        }
+        if (causeBuilder.length() == 0) causeBuilder.append("Started");
 
-            for (AuditLogger logger : configuration.getLoggers()) {
-                String message = run.getFullDisplayName() +
-                        " " + causeBuilder.toString() +
-                        " on node " + buildNodeName(run) +
-                        " started at " + run.getTimestampString2() +
-                        " completed in " + run.getDuration() + "ms" +
-                        " completed: " + run.getResult();
-                logger.log(message);
-            }
+        for (AuditLogger logger : configuration.getLoggers()) {
+            String message = run.getFullDisplayName() +
+                  " " + causeBuilder.toString() +
+                  " on node " + buildNodeName(run) +
+                  " started at " + run.getTimestampString2() +
+                  " completed in " + run.getDuration() + "ms" +
+                  " completed: " + run.getResult();
+            logger.log(message);
         }
     }
 

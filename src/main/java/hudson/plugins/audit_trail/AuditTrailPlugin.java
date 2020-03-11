@@ -71,8 +71,6 @@ public class AuditTrailPlugin extends GlobalConfiguration {
 
     private List<AuditLogger> loggers = new ArrayList<>();
 
-    private transient boolean started;
-
     private transient String log;
 
     public String getPattern() { return pattern; }
@@ -89,13 +87,13 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         // TODO this should probably be moved somewhere else
         loggers.forEach(AuditLogger::cleanUp);
         req.bindJSON(this, formData);
-        applySettings();
         return true;
     }
 
     @DataBoundSetter
     public void setPattern(String pattern) {
         this.pattern = Optional.ofNullable(pattern).orElse("");
+        updateFilterPattern();
         save();
     }
 
@@ -103,6 +101,14 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     public void setLogBuildCause(boolean logBuildCause) {
         this.logBuildCause = logBuildCause;
         save();
+    }
+
+    private void updateFilterPattern() {
+        try {
+            AuditTrailFilter.setPattern(pattern);
+        } catch (PatternSyntaxException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -116,25 +122,6 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     @DataBoundSetter
     public void setLoggers(List<AuditLogger> loggers) {
         this.loggers = Optional.ofNullable(loggers).orElse(Collections.emptyList());
-    }
-
-    @PostConstruct
-    private void applySettings() {
-        try {
-            AuditTrailFilter.setPattern(pattern);
-        } catch (PatternSyntaxException ex) {
-            ex.printStackTrace();
-        }
-
-        for (AuditLogger logger : loggers) {
-            logger.configure();
-        }
-        started = true;
-    }
-
-    // TODO keeping this logic while refactoring, I'm not sure this is necessary
-    boolean isStarted() {
-        return started;
     }
 
     /**
@@ -163,11 +150,12 @@ public class AuditTrailPlugin extends GlobalConfiguration {
             if (loggers == null) {
                 loggers = new ArrayList<>();
             }
-            LogFileAuditLogger logger = new LogFileAuditLogger(log, 1, 1);
+            LogFileAuditLogger logger = new LogFileAuditLogger(log, 1, 1, null);
             if (!loggers.contains(logger))
                 loggers.add(logger);
             log = null;
         }
+        updateFilterPattern();
         return this;
     }
 

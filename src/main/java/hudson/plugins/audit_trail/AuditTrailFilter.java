@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static hudson.init.InitMilestone.PLUGINS_PREPARED;
+import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
@@ -77,7 +77,7 @@ public class AuditTrailFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
-            throws IOException, ServletException {
+          throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         String uri;
         if (req.getPathInfo() == null) {
@@ -89,17 +89,21 @@ public class AuditTrailFilter implements Filter {
         }
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
-            String username = user != null ? user.getId() : req.getRemoteAddr(),
-                   extra = "";
+            String username = user != null ? user.getId() : req.getRemoteAddr();
+            String extra = "";
             // For queue items, show what task is in the queue:
-            if (uri.startsWith("/queue/item/")) try {
-                extra = " (" + Jenkins.getInstance().getQueue().getItem(Integer.parseInt(
-                        uri.substring(12, uri.indexOf('/', 13)))).task.getUrl() + ')';
-            } catch (Exception e) {
-                LOGGER.log(Level.FINEST, "Error occurred during parsing queue item", e);
+            if (uri.startsWith("/queue/item/")) {
+                extra = extractInfoFromQueueItem(uri);
+            } else if (uri.startsWith("/queue/cancelItem")) {
+                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(req.getParameter("id")));
+                // not sure of the intent of the original author
+                // it looks to me we should always log the query parameters
+                // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded plugin
+                // let's see if this becomes a wanted feature...
+                uri += "?" + req.getQueryString();
             }
 
-            if(LOGGER.isLoggable(Level.FINE))
+            if (LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
 
             onRequest(uri, extra, username);
@@ -109,11 +113,29 @@ public class AuditTrailFilter implements Filter {
         chain.doFilter(req, res);
     }
 
+    private String extractInfoFromQueueItem(String uri) {
+        try {
+            int itemId = Integer.parseInt(uri.substring(12, uri.indexOf('/', 13)));
+            return getFormattedQueueItemUrlFromItemId(itemId);
+        } catch (Exception e) {
+            LOGGER.log(Level.FINEST, "Error occurred while parsing queue item", e);
+        }
+        return "";
+    }
+
+    private String getFormattedQueueItemUrlFromItemId(int itemId) {
+        return formatExtraInfoString(Jenkins.getInstance().getQueue().getItem(itemId).task.getUrl());
+    }
+
+    private String formatExtraInfoString(String toFormat) {
+        return String.format(" (%s)", toFormat);
+    }
+
     public void destroy() {
     }
 
     // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
-    @Initializer(after = PLUGINS_PREPARED)
+    @Initializer(after = EXTENSIONS_AUGMENTED)
     public static void init() throws ServletException {
         Injector injector = Jenkins.getInstance().getInjector();
         if (injector == null) {
@@ -124,14 +146,9 @@ public class AuditTrailFilter implements Filter {
 
     private void onRequest(String uri, String extra, String username) {
         if (configuration != null) {
-            if (configuration.isStarted()) {
-                for (AuditLogger logger :  configuration.getLoggers()) {
-                    logger.log(uri + extra + " by " + username);
-                }
-            } else {
-                LOGGER.warning("Plugin configuration not properly injected, please report an issue to the Audit Trail Plugin");
+            for (AuditLogger logger : configuration.getLoggers()) {
+                logger.log(uri + extra + " by " + username);
             }
         }
-
     }
 }

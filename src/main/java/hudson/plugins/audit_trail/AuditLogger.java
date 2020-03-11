@@ -13,8 +13,6 @@ import jenkins.model.Jenkins;
  */
 public abstract class AuditLogger implements Describable<AuditLogger>, ExtensionPoint {
 
-    public abstract void configure();
-
     public abstract void log(String event);
 
     public Descriptor<AuditLogger> getDescriptor() {

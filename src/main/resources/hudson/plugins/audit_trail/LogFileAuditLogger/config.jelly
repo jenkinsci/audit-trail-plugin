@@ -9,4 +9,7 @@
     <f:entry title="${%Log File Count}" field="count">
       <f:textbox />
     </f:entry>
+    <f:entry title="${%Log Separator}" field="logSeparator">
+      <f:textbox />
+    </f:entry>
 </j:jelly>
