@@ -109,6 +109,11 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         this.skipCertificateValidation = skipCertificateValidation;
     }
 
+    private Object readResolve() {
+        configure();
+        return this;
+    }
+
     @Override
     public void log(String event) {
         if (elasticSearchSender == null) {
@@ -129,7 +134,6 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
     }
 
-    @Override
     public void configure() {
         if (url == null || url.length() == 0) {
             LOGGER.fine("Elastic Search Logger not configured");
