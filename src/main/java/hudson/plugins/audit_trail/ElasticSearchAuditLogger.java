@@ -129,8 +129,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         try {
             elasticSearchSender.sendMessage(event);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Exception sending audit message to Elastic Search server " + elasticSearchSender.toString(), e);
-            LOGGER.warning(event);
+            LOGGER.log(Level.WARNING, "Audit event not sent to Elastic Search server: " + event + " - " + elasticSearchSender.toString(), e);
         }
     }
 
