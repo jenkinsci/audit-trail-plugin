@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.50</version>
+        <version>3.57</version>
         <relativePath />
     </parent>
 
@@ -14,8 +14,9 @@
     <name>Audit Trail</name>
     <version>3.5-SNAPSHOT</version>
     <properties>
-        <jenkins.version>2.138.1</jenkins.version>
+        <jenkins.version>2.190.3</jenkins.version>
         <java.level>8</java.level>
+        <slf4jVersion>1.7.26</slf4jVersion>
     </properties>
 
     <url>https://github.com/jenkinsci/audit-trail-plugin</url>
@@ -45,20 +46,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.jenkins</groupId>
-            <artifactId>configuration-as-code</artifactId>
-            <classifier>tests</classifier>
+            <groupId>io.jenkins.configuration-as-code</groupId>
+            <artifactId>test-harness</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>apache-httpcomponents-client-4-api</artifactId>
-            <version>4.5.10-2.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.1.11</version>
         </dependency>
     </dependencies>
 
@@ -95,8 +93,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.138.x</artifactId>
-                <version>4</version>
+                <artifactId>bom-2.190.x</artifactId>
+                <version>9</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
