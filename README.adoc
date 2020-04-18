@@ -2,7 +2,7 @@
 
 image:https://img.shields.io/jenkins/plugin/v/audit-trail.svg[link=https://plugins.jenkins.io/audit-trail]
 image:https://img.shields.io/github/release/jenkinsci/audit-trail-plugin.svg?label=changelog[link=https://github.com/jenkinsci/audit-trail-plugin/releases/latest]
-image:https://img.shields.io/jenkins/plugin/i/envinject-api.svg?color=blue[https://plugins.jenkins.io/audit-trail]
+image:https://img.shields.io/jenkins/plugin/i/audit-trail.svg?color=blue[https://plugins.jenkins.io/audit-trail]
 
 This plugin keeps a log of who performed particular Jenkins operations, such as configuring jobs.
 
