@@ -28,6 +28,17 @@
         <tag>HEAD</tag>
     </scm>
 
+    <developers>
+        <developer>
+            <id>pierrebtz</id>
+            <name>Pierre Beitz</name>
+            <email>pibeitz@gmail.com</email>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>com.cloudbees</groupId>
