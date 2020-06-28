@@ -65,15 +65,6 @@ public class AuditTrailTest {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
-    private static final int TIMEOUT = 2000;
-    private static final String LOG_LOCATION_INPUT_NAME = "_.log";
-    private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
-    private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
-    private static final String LOG_FILE_LOG_SEPARATOR_INPUT_NAME = "_.logSeparator";
-    private static final String PATTERN_INPUT_NAME= "pattern";
-    private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
-    private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
-
     @After
     public void tearDown() {
         tmpDir.delete();
@@ -85,7 +76,7 @@ public class AuditTrailTest {
         // Configure plugin
         File logFile = new File(tmpDir.getRoot(), "test.log");
         JenkinsRule.WebClient wc = j.createWebClient();
-        configurePlugin(j, logFile, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
@@ -103,20 +94,6 @@ public class AuditTrailTest {
             + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
     }
 
-    static void configurePlugin(JenkinsRule j, File logFile, JenkinsRule.WebClient wc) throws Exception {
-        HtmlPage configure = wc.goTo("configure");
-        HtmlForm form = configure.getFormByName("config");
-        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
-        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
-        wc.waitForBackgroundJavaScript(TIMEOUT);
-        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
-        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
-        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
-        form.getInputByName(LOG_FILE_LOG_SEPARATOR_INPUT_NAME).setValueAttribute(DEFAULT_LOG_SEPARATOR);
-        form.getInputByName(PATTERN_INPUT_NAME).setValueAttribute(".*/(?:enable|cancelItem)");
-        j.submit(form);
-    }
-
     @Issue("JENKINS-44129")
     @Test
     public void shouldCorrectlyCleanUpFileHandlerOnApply() throws Exception {
@@ -124,17 +101,10 @@ public class AuditTrailTest {
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
-        j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
-        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
-        wc.waitForBackgroundJavaScript(AuditTrailTest.TIMEOUT);
-        File logFile = new File(tmpDir.getRoot(), "unique.log");
-        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
-        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
-        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("1");
-        j.submit(form);
 
         // When
-        j.submit(form);
+        File logFile = new File(tmpDir.getRoot(), "unique.log");
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         // Then
         assertEquals("Only two files should be present, the file opened by the FileHandler and its lock",
