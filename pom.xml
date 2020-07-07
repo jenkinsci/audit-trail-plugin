@@ -28,6 +28,12 @@
         <tag>HEAD</tag>
     </scm>
 
+    <licenses>
+        <license>
+	    <name>MIT License</name>
+	</license>
+    </licenses>
+
     <developers>
         <developer>
             <id>pierrebtz</id>
