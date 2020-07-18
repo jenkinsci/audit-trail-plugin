@@ -4,10 +4,8 @@ import hudson.Util;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
-import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.PasswordParameterDefinition;
-import hudson.model.PasswordParameterValue;
 import hudson.model.StringParameterDefinition;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,7 +17,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-import static hudson.plugins.audit_trail.AuditTrailTest.configurePlugin;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -38,7 +35,7 @@ public class AuditTrailRunListenerTest {
         String logFileName = "jobParametersAreProperlyLogged.log";
         File logFile = new File(tmpDir.getRoot(), logFileName);
         JenkinsRule.WebClient wc = j.createWebClient();
-        configurePlugin(j, logFile, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.addProperty(new ParametersDefinitionProperty(
@@ -56,7 +53,7 @@ public class AuditTrailRunListenerTest {
         String logFileName = "jobWithoutParameterIsProperlyLogged.log";
         File logFile = new File(tmpDir.getRoot(), logFileName);
         JenkinsRule.WebClient wc = j.createWebClient();
-        configurePlugin(j, logFile, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
@@ -71,7 +68,7 @@ public class AuditTrailRunListenerTest {
         String logFileName = "jobWithSecretParameterIsProperlyLogged.log";
         File logFile = new File(tmpDir.getRoot(), logFileName);
         JenkinsRule.WebClient wc = j.createWebClient();
-        configurePlugin(j, logFile, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.addProperty(new ParametersDefinitionProperty(new PasswordParameterDefinition("passParam", "thisIsASecret", "")));
@@ -81,4 +78,21 @@ public class AuditTrailRunListenerTest {
         assertTrue("logged actions: " + log, Pattern.compile(".*, Parameters:\\[passParam: \\{\\*\\*\\*\\*\\}\\].*", Pattern.DOTALL).matcher(log).matches());
     }
 
+    @Issue("JENKINS-62812")
+    @Test
+    public void ifSetToNotLogBuildCauseShouldNotLogThem() throws Exception {
+        String logFileName = "ifSetToNotLogBuildCauseShouldNotLogThem.log";
+        File logFile = new File(tmpDir.getRoot(), logFileName);
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile)
+              .withLogBuildCause(false)
+              .sendConfiguration(j, wc);
+
+        FreeStyleProject job = j.createFreeStyleProject("test-job");
+        job.addProperty(new ParametersDefinitionProperty(new PasswordParameterDefinition("passParam", "thisIsASecret", "")));
+        job.scheduleBuild2(0, new Cause.UserIdCause()).get();
+
+        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        assertTrue(log.isEmpty());
+    }
 }

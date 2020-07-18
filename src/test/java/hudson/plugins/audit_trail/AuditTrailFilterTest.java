@@ -16,7 +16,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-import static hudson.plugins.audit_trail.AuditTrailTest.configurePlugin;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -34,7 +33,7 @@ public class AuditTrailFilterTest {
     public void cancelItemLogsTheQueryStringAndTheUser() throws Exception {
         File logFile = new File(tmpDir.getRoot(), "test.log");
         JenkinsRule.WebClient wc = j.createWebClient();
-        configurePlugin(j, logFile, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.scheduleBuild2(LONG_DELAY, new Cause.UserIdCause());

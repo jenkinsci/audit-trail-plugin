@@ -32,29 +32,33 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        StringBuilder builder = new StringBuilder(100);
-        dumpCauses(run, builder);
-        dumpParameters(run, builder);
+        if(configuration.shouldLogBuildCause()) {
+            StringBuilder builder = new StringBuilder(100);
+            dumpCauses(run, builder);
+            dumpParameters(run, builder);
 
-        for (AuditLogger logger : configuration.getLoggers()) {
-            logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + builder.toString());
+            for (AuditLogger logger : configuration.getLoggers()) {
+                logger.log(run.getParent().getUrl() + " #" + run.getNumber() + ' ' + builder.toString());
+            }
         }
     }
 
     @Override
     public void onFinalized(Run run) {
-        StringBuilder builder = new StringBuilder(100);
-        dumpCauses(run, builder);
-        dumpParameters(run, builder);
+        if(configuration.shouldLogBuildCause()) {
+            StringBuilder builder = new StringBuilder(100);
+            dumpCauses(run, builder);
+            dumpParameters(run, builder);
 
-        for (AuditLogger logger : configuration.getLoggers()) {
-            String message = run.getFullDisplayName() +
-                  " " + builder.toString() +
-                  " on node " + buildNodeName(run) +
-                  " started at " + run.getTimestampString2() +
-                  " completed in " + run.getDuration() + "ms" +
-                  " completed: " + run.getResult();
-            logger.log(message);
+            for (AuditLogger logger : configuration.getLoggers()) {
+                String message = run.getFullDisplayName() +
+                      " " + builder.toString() +
+                      " on node " + buildNodeName(run) +
+                      " started at " + run.getTimestampString2() +
+                      " completed in " + run.getDuration() + "ms" +
+                      " completed: " + run.getResult();
+                logger.log(message);
+            }
         }
     }
 

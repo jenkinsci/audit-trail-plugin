@@ -75,7 +75,20 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private transient String log;
 
     public String getPattern() { return pattern; }
-    public boolean getLogBuildCause() { return logBuildCause; }
+    
+    @Deprecated
+    /**
+     * @deprecated as of 3.6
+     * Use the {@link #shouldLogBuildCause()} method.
+     **/
+    public boolean getLogBuildCause() {
+        return shouldLogBuildCause();
+    }
+    
+    public boolean shouldLogBuildCause() {
+        return logBuildCause;
+    }
+
     public List<AuditLogger> getLoggers() { return loggers; }
 
     public AuditTrailPlugin() {
