@@ -101,6 +101,8 @@ public class AuditTrailFilter implements Filter {
                 // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded plugin
                 // let's see if this becomes a wanted feature...
                 uri += "?" + req.getQueryString();
+            } else if (uri.contains("/createItem")) {
+                extra = formatExtraInfoString(req.getParameter("name"));
             }
 
             if (LOGGER.isLoggable(Level.FINE))
