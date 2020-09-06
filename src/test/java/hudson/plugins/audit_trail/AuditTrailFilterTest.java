@@ -3,12 +3,15 @@ package hudson.plugins.audit_trail;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
@@ -48,5 +51,27 @@ public class AuditTrailFilterTest {
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), StandardCharsets.UTF_8);
         assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\Q127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+    }
+
+    @Issue("JENKINS-15731")
+    @Test
+    public void createItemLogsTheNewItemName() throws Exception {
+        File logFile = new File(tmpDir.getRoot(), "create-item.log");
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
+
+        String jobName = "Job With Space";
+        HtmlPage configure = wc.goTo("view/all/newJob");
+        HtmlForm form = configure.getFormByName("createItem");
+        form.getInputByName("name").setValueAttribute(jobName);
+        // not clear to me why the input is not visible in the test (yet it exists in the page)
+        // for some reason the two next calls are needed
+        form.getInputByValue("hudson.model.FreeStyleProject").click(false, false, false, true, true, false);
+        form.getInputByValue("hudson.model.FreeStyleProject").setChecked(true);
+        j.submit(form);
+
+        String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
+        assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\Q127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+
     }
 }
