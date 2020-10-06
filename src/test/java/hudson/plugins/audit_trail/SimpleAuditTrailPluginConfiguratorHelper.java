@@ -25,7 +25,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private final File logFile;
 
     private boolean logBuildCause =true;
-    private String pattern = ".*/(?:enable|cancelItem)";
+    private String pattern = ".*/(?:enable|cancelItem|quietDown)/?.*";
 
     public SimpleAuditTrailPluginConfiguratorHelper(File logFile) {
         this.logFile = logFile;

@@ -34,6 +34,9 @@ import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -79,14 +82,7 @@ public class AuditTrailFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
           throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
-        String uri;
-        if (req.getPathInfo() == null) {
-            // workaround: on some containers such as CloudBees DEV@cloud, req.getPathInfo() is unexpectedly null,
-            // construct pathInfo based on contextPath and requestUri
-            uri = req.getRequestURI().substring(req.getContextPath().length());
-        } else {
-            uri = req.getPathInfo();
-        }
+        String uri = getPathInfo(req);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null ? user.getId() : req.getRemoteAddr();
@@ -150,5 +146,46 @@ public class AuditTrailFilter implements Filter {
                 logger.log(uri + extra + " by " + username);
             }
         }
+    }
+
+    // See SECURITY-1815
+    private static String getPathInfo(HttpServletRequest request) {
+        return canonicalPath(request.getRequestURI().substring(request.getContextPath().length()));
+    }
+
+    // Copied from Stapler#canonicalPath
+    private static String canonicalPath(String path) {
+        List<String> r = new ArrayList<>(Arrays.asList(path.split("/+")));
+        for (int i = 0; i < r.size(); ) {
+            if (r.get(i).length() == 0 || r.get(i).equals(".")) {
+                // empty token occurs for example, "".split("/+") is [""]
+                r.remove(i);
+            } else if (r.get(i).equals("..")) {
+                // i==0 means this is a broken URI.
+                r.remove(i);
+                if (i > 0) {
+                    r.remove(i - 1);
+                    i--;
+                }
+            } else {
+                i++;
+            }
+        }
+
+        StringBuilder buf = new StringBuilder();
+        if (path.startsWith("/")) {
+            buf.append('/');
+        }
+        boolean first = true;
+        for (String token : r) {
+            if (!first) buf.append('/');
+            else first = false;
+            buf.append(token);
+        }
+        // translation: if (path.endsWith("/") && !buf.endsWith("/"))
+        if (path.endsWith("/") && (buf.length() == 0 || buf.charAt(buf.length() - 1) != '/')) {
+            buf.append('/');
+        }
+        return buf.toString();
     }
 }
