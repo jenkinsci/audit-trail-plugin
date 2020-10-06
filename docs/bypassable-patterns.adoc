@@ -1,0 +1,13 @@
+== Bypassable Patterns
+
+Historically this plugin proposed a default pattern that could be bypassed by an attacker to avoid having a request logged.
+For instance the plugin was logging by default a request to `/configSubmit` but not to `/configSubmit/forged`.
+The issue is that Jenkins will internally route both requests the same way, so an attacker could submit a configuration change without it being logged.
+
+NOTE: we are here only talking about the logging of the requests, this is in no way a bypass of Jenkins security mechanism.
+The attacker would still have needed ADMINISTRATIVE rights to submit the configuration.
+
+The default pattern has been changed to mitigate this attack.
+In addition, all instances using one of the known legacy default pattern get their pattern automatically updated to the safe default.
+
+In addition, an administrative monitor detects common keywords that users might try to catch, and notifies them if their custom pattern suffers this flaw.

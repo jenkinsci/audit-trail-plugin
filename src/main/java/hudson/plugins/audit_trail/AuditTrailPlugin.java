@@ -42,17 +42,21 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static hudson.plugins.audit_trail.BypassablePatternMonitor.isLegacyBypassableDefaultPattern;
+import static hudson.plugins.audit_trail.BypassablePatternMonitor.validatePatternAgainstKnownKeywords;
+
 
 /**
  * Keep audit trail of particular Jenkins operations, such as configuring jobs.
@@ -65,14 +69,34 @@ import java.util.regex.PatternSyntaxException;
 public class AuditTrailPlugin extends GlobalConfiguration {
 
     private static final Logger LOGGER = Logger.getLogger(AuditTrailPlugin.class.getName());
-    private String pattern = ".*/(?:configSubmit|doDelete|postBuildResult|enable|disable|"
-            + "cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|"
-            + "cancelQuietDown|quietDown|restart|exit|safeExit)";
     private boolean logBuildCause = true;
 
     private List<AuditLogger> loggers = new ArrayList<>();
 
     private transient String log;
+
+    private static final List<String> KNOWN_KEYWORDS = Arrays.asList(
+          "configSubmit",
+          "doDelete",
+          "postBuildResult",
+          "enable",
+          "disable",
+          "cancelQueue",
+          "stop",
+          "toggleLogKeep",
+          "doWipeOutWorkspace",
+          "createItem",
+          "createView",
+          "toggleOffline",
+          "cancelQuietDown",
+          "quietDown",
+          "restart",
+          "exit",
+          "safeExit"
+    );
+
+    static final String DEFAULT_PATTERN = ".*/(?:" + String.join("|", KNOWN_KEYWORDS) + ")/?.*";
+    private String pattern = DEFAULT_PATTERN;
 
     public String getPattern() { return pattern; }
     
@@ -106,9 +130,23 @@ public class AuditTrailPlugin extends GlobalConfiguration {
 
     @DataBoundSetter
     public void setPattern(String pattern) {
-        this.pattern = Optional.ofNullable(pattern).orElse("");
+        if(isLegacyBypassableDefaultPattern(pattern)) {
+            LOGGER.warning("Found a legacy vulnerable pattern, will use the default pattern");
+            resetPattern();
+        } else {
+            this.pattern = Optional.ofNullable(pattern).orElse("");
+        }
         updateFilterPattern();
         save();
+    }
+
+    void resetPattern() {
+        LOGGER.info("Reset the default pattern");
+        pattern = DEFAULT_PATTERN;
+    }
+
+    static List<String> getKnownKeywords() {
+        return Collections.unmodifiableList(KNOWN_KEYWORDS);
     }
 
     @DataBoundSetter
@@ -181,14 +219,15 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         // No permission needed for simple syntax check
         try {
             Pattern.compile(value);
-            return FormValidation.ok();
-        } catch (Exception ex) {
+        } catch (PatternSyntaxException ex) {
             // SECURITY-1722: As the exception message will contain the user input Pattern,
             // it needs to be escaped to prevent an XSS attack
             return FormValidation.errorWithMarkup("Invalid <a href=\""
                     + "https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html"
                     + "\">regular expression</a> (" + Util.escape(ex.getMessage()) + ")");
         }
+        // also validate pattern against SECURITY-1846
+        return validatePatternAgainstKnownKeywords(value);
     }
 
     @Override
