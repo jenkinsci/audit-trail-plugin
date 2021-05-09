@@ -73,6 +73,12 @@ public class BypassablePatternMonitor extends AdministrativeMonitor {
         return validatePatternAgainstKnownKeywords(auditTrailPlugin.getPattern()).kind != FormValidation.Kind.OK;
     }
 
+    // TODO add the Override when moving to a Core >= 2.267
+    // @Override
+    public boolean isSecurity() {
+        return true;
+    }
+
     private static class BypassablePatternDetector {
         private final String keyword;
         private final List<String> messages;
