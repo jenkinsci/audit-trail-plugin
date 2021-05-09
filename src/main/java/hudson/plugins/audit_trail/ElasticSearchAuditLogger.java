@@ -24,8 +24,6 @@
 
 package hudson.plugins.audit_trail;
 
-import static com.google.common.collect.Ranges.closedOpen;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -47,6 +45,8 @@ import javax.net.ssl.SSLContext;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang.math.IntRange;
+import org.apache.commons.lang.math.Range;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -72,7 +72,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-import com.google.common.collect.Range;
 
 import hudson.Extension;
 import hudson.model.Descriptor;
@@ -294,7 +293,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
      */
     static class ElasticSearchSender {
         private final CloseableHttpClient httpClient;
-        private final Range<Integer> successCodes = closedOpen(200,300);
+        private final Range successCodes = new IntRange(200, 299); // [200,300[
 
         private final String url;
         private final String auth;
@@ -342,11 +341,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         public void sendMessage(String event) throws IOException {
             HttpPost post = getHttpPost(event);
             try (CloseableHttpResponse response = httpClient.execute(post)) {
-                if (!successCodes.contains(response.getStatusLine().getStatusCode())) {
+                if (!successCodes.containsInteger(response.getStatusLine().getStatusCode())) {
                     throw new IOException(this.getErrorMessage(response));
-                } else {
-                    LOGGER.log(Level.FINE, "Response: {0}", response.toString());
                 }
+                LOGGER.log(Level.FINE, "Response: {0}", response.toString());
             }
         }
 
