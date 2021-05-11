@@ -28,6 +28,13 @@
         <tag>HEAD</tag>
     </scm>
 
+    <licenses>
+        <license>
+	    <name>MIT License</name>
+	    <url>https://opensource.org/licenses/MIT</url>
+	</license>
+    </licenses>
+
     <developers>
         <developer>
             <id>pierrebtz</id>
