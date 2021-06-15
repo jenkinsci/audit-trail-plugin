@@ -85,7 +85,8 @@ public class AuditTrailFilter implements Filter {
         String uri = getPathInfo(req);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
-            String username = user != null ? user.getId() : req.getRemoteAddr();
+            String username = user != null ? user.getId() : "NA";
+            String remoteIP = req.getRemoteAddr();
             String extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) {
@@ -102,9 +103,9 @@ public class AuditTrailFilter implements Filter {
             }
 
             if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINE, "Audit request {0} by user {1}", new Object[]{uri, username});
+                LOGGER.log(Level.FINE, "Audit request {0} by user {1} from {2}", new Object[]{uri, username, remoteIP});
 
-            onRequest(uri, extra, username);
+            onRequest(uri, extra, username, remoteIP);
         } else {
             LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
         }
@@ -142,10 +143,10 @@ public class AuditTrailFilter implements Filter {
         PluginServletFilter.addFilter(injector.getInstance(AuditTrailFilter.class));
     }
 
-    private void onRequest(String uri, String extra, String username) {
+    private void onRequest(String uri, String extra, String username, String remoteIP) {
         if (configuration != null) {
             for (AuditLogger logger : configuration.getLoggers()) {
-                logger.log(uri + extra + " by " + username);
+                logger.log(uri + extra + " by " + username + " from " + remoteIP);
             }
         }
     }
