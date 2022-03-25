@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.18</version>
+        <version>4.38</version>
         <relativePath />
     </parent>
 
@@ -14,7 +14,7 @@
     <name>Audit Trail</name>
     <version>3.11-SNAPSHOT</version>
     <properties>
-        <jenkins.version>2.263.1</jenkins.version>
+        <jenkins.version>2.319.1</jenkins.version>
         <java.level>8</java.level>
         <slf4jVersion>1.7.30</slf4jVersion>
     </properties>
@@ -80,6 +80,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
+            <version>999999-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -116,8 +117,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.263.x</artifactId>
-                <version>807.v6d348e44c987</version>
+                <artifactId>bom-2.319.x</artifactId>
+                <version>1210.vcd41f6657f03</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -129,7 +130,6 @@
                        Does not include caffeine in the hpi file. -->
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
-                <version>2.9.1</version>
                 <exclusions>
                     <!--  do not bring in the annotations -->
                     <exclusion>
