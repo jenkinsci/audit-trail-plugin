@@ -1,5 +1,6 @@
 package hudson.plugins.audit_trail;
 
+import hudson.EnvVars;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,5 +28,15 @@ public class LogFileAuditLoggerTest {
         Path logFile = folder.getRoot().toPath().resolve("subdirectory").resolve("file");
         new LogFileAuditLogger(logFile.toString(), 5, 1, null);
         Assert.assertTrue(logFile.toFile().exists());
+    }
+
+    @Issue("JENKINS-67493")
+    @Test
+    public void environmentVariablesAreProperlyExpanded() {
+        Path rootFolder = folder.getRoot().toPath();
+        EnvVars.masterEnvVars.put("EXPAND_ME", "expandMe");
+        String logFile = rootFolder.resolve("${EXPAND_ME}").toString();
+        LogFileAuditLogger logger = new LogFileAuditLogger(logFile, 5, 1, null);
+        Assert.assertEquals(rootFolder.resolve("expandMe").toString(), logger.getLog());
     }
 }
