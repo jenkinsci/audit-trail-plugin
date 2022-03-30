@@ -19,12 +19,14 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private static final String LOG_FILE_LOG_SEPARATOR_INPUT_NAME = "_.logSeparator";
     private static final String PATTERN_INPUT_NAME= "pattern";
     private static final String LOG_BUILD_CAUSE_INPUT_NAME="logBuildCause";
+    private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME="logCredentialsUsage";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
 
     private final File logFile;
 
-    private boolean logBuildCause =true;
+    private boolean logBuildCause = true;
+    private boolean logCredentialsUsage = true;
     private String pattern = ".*/(?:enable|cancelItem|quietDown|createItem)/?.*";
 
     public SimpleAuditTrailPluginConfiguratorHelper(File logFile) {
@@ -33,6 +35,10 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
 
     public SimpleAuditTrailPluginConfiguratorHelper withLogBuildCause(boolean logBuildCause) {
         this.logBuildCause = logBuildCause;
+        return this;
+    }
+    public SimpleAuditTrailPluginConfiguratorHelper withLogCredentialsUsage(boolean logCredentialsUsage) {
+        this.logCredentialsUsage = logCredentialsUsage;
         return this;
     }
 
@@ -53,6 +59,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         form.getInputByName(LOG_FILE_LOG_SEPARATOR_INPUT_NAME).setValueAttribute(DEFAULT_LOG_SEPARATOR);
         form.getInputByName(PATTERN_INPUT_NAME).setValueAttribute(pattern);
         form.getInputByName(LOG_BUILD_CAUSE_INPUT_NAME).setChecked(logBuildCause);
+        form.getInputByName(LOG_CREDENTIALS_USAGE_INPUT_NAME).setChecked(logCredentialsUsage);
         j.submit(form);
     }
 }
