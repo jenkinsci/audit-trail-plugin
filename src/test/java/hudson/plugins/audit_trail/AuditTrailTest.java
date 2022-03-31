@@ -84,7 +84,7 @@ public class AuditTrailTest {
         assertEquals("log size", 1, logger.getLimit());
         assertEquals("log count", 2, logger.getCount());
         assertTrue("log build cause", plugin.getLogBuildCause());
-
+        assertTrue("log credentials usage", plugin.shouldLogCredentialsUsage());
         // When
         createJobAndPush();
 
