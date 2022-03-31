@@ -1,10 +1,14 @@
 package hudson.plugins.audit_trail;
 
 import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsUseListener;
+import com.cloudbees.plugins.credentials.common.IdCredentials;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import hudson.Extension;
-import hudson.model.ModelObject;
+import hudson.model.Item;
+import hudson.model.Node;
+import hudson.model.Run;
 
 import javax.inject.Inject;
 import java.util.logging.Level;
@@ -18,48 +22,95 @@ import java.util.logging.Logger;
  * @author Jan Meiswinkel
  */
 @Extension
-public class CredentialUsageListener extends CredentialsUseListener {
+public class CredentialUsageListener implements CredentialsUseListener {
     @Inject
     AuditTrailPlugin configuration;
 
     /**
      * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
-     * {@link com.cloudbees.plugins.credentials.Credentials}
+     * {@link com.cloudbees.plugins.credentials.Credentials}.
+     *
+     * @see CredentialsProvider#trackAll(Run, java.util.List)
      *
      * @param c     The used Credentials.
-     * @param obj   The object using the credentials.
+     * @param run   The object using the credentials.
      */
     @Override
-    public void onUse(Credentials c, ModelObject obj) {
-        if (!configuration.shouldLogCredentialsUsage()) {
+    public void onUse(Credentials c, Run run) {
+        if (!configuration.shouldLogCredentialsUsage())
             return;
-        }
 
         StringBuilder builder = new StringBuilder(100);
 
-        String objName = obj.toString();
-        String objType = obj.getClass().toString();
+        String runName = run.getExternalizableId();
+        String runType = run.getClass().toString();
+        builder.append(String.format("'%s' (%s) ", runName, runType));
+        auditLog(c, builder);
+    }
 
-        builder.append("'" + objName
-                + "' (" + objType + ") ");
+    /**
+     * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
+     * {@link com.cloudbees.plugins.credentials.Credentials}.
+     *
+     * @see CredentialsProvider#trackAll(Node, java.util.List)
 
+     * @param c     The used Credentials.
+     * @param node   The object using the credentials.
+     */
+    @Override
+    public void onUse(Credentials c, Node node) {
+        if (!configuration.shouldLogCredentialsUsage())
+            return;
+
+        StringBuilder builder = new StringBuilder(100);
+
+        String nodeName = node.getNodeName();
+        String nodeType = node.getClass().toString();
+        builder.append(String.format("'%s' (%s) ", nodeName, nodeType));
+        auditLog(c, builder);
+    }
+
+    /**
+     * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
+     * {@link com.cloudbees.plugins.credentials.Credentials}.
+     *
+     * @see CredentialsProvider#trackAll(Item, java.util.List)
+     *
+     * @param c     The used Credentials.
+     * @param item   The object using the credentials.
+     */
+    @Override
+    public void onUse(Credentials c, Item item) {
+        if (!configuration.shouldLogCredentialsUsage())
+            return;
+
+        StringBuilder builder = new StringBuilder(100);
+
+        String runName = item.getFullName();
+        String itemType = item.getClass().toString();
+        builder.append(String.format("'%s' (%s) ", runName, itemType));
+        auditLog(c, builder);
+    }
+
+    private void auditLog(Credentials c, StringBuilder builder) {
         String credsType = c.getClass().toString();
-
         if (c instanceof BaseStandardCredentials) {
             String credsId = ((BaseStandardCredentials) c).getId();
-            builder.append("used credentials '" + credsId + "' (" + credsType + ").");
+            builder.append(String.format("used credentials '%s' (%s).", credsId, credsType));
+        } else if (c instanceof IdCredentials) {
+            String credsId = ((IdCredentials) c).getId();
+            builder.append(String.format("used credentials '%s' (%s).", credsId, credsType));
         } else {
-            String nonDefaultWarning = builder + ("used an unsupported credentials type (" + credsType +
-                    ") that may potentially not be audit-logged correctly.");
-            Logger.getLogger(CredentialUsageListener.class.getName()).log(Level.INFO, null, nonDefaultWarning);
+            String noIdAvailableWarning = builder + ("used an unsupported credentials type (" + credsType +
+                    ") whose ID cannot be audit-logged. Consider opening an issue.");
+            Logger.getLogger(CredentialUsageListener.class.getName()).log(Level.WARNING, null, noIdAvailableWarning);
 
-            builder.append("used credentials '" + c + "' (" + credsType + ") (Note: Used fallback method for log as " +
-                    "credentials type is not supported. See INFO log for more information.");
+            builder.append("used credentials of type " + credsType + " (Note: Used fallback method for log as " +
+                    "credentials type is not supported. See INFO log for more information).");
         }
 
         for (AuditLogger logger : configuration.getLoggers()) {
             logger.log(builder.toString());
         }
     }
-
 }
