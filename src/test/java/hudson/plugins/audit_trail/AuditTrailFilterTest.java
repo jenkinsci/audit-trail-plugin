@@ -67,12 +67,12 @@ public class AuditTrailFilterTest {
         form.getInputByName("name").blur();
         // not clear to me why the input is not visible in the test (yet it exists in the page)
         // for some reason the two next calls are needed
-        form.getInputByValue("hudson.model.FreeStyleProject").click(false, false, false, true, true, false);
+        form.getInputByValue("hudson.model.FreeStyleProject").click(false, false, false, true, false, true, false);
         form.getInputByValue("hudson.model.FreeStyleProject").setChecked(true);
+        wc.waitForBackgroundJavaScript(50);
         j.submit(form);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
         assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
-
     }
 }
