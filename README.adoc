@@ -22,7 +22,7 @@ Also see the
 https://wiki.jenkins.io/display/JENKINS/JobConfigHistory+Plugin[JobConfigHistory
 Plugin] for recording actual changes made to job configurations.
 
-== Configuration
+== Logger Configuration
 
 === File logger
 
@@ -59,6 +59,16 @@ Send audit logs to an Elastic Search server
 
 image:docs/images/jenkins-audit-trail-elastic-search-logger.png[image,width=400]
 
+== Other configuration
+
+=== Log build triggers
+
+Will log the cause of a build. Defaults to true.
+
+=== Log credential users
+
+Will log usage of credentials as long as they are consumed through the https://plugins.jenkins.io/credentials/[Credentials plugin].
+Defaults to true.
 
 === About the client IP-address appearing in the logs
 ====
