@@ -122,26 +122,6 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-            <!--  See
-            https://groups.google.com/d/msgid/jenkinsci-dev/64f55a31-4dfa-4ba9-b15e-aca6e7620864n%40googlegroups.com
-            -->
-            <dependency><!-- If caffeine is needed, use version 2.9.1.
-                       Resolves an upper bounds dependency message.
-                       Does not include caffeine in the hpi file. -->
-                <groupId>com.github.ben-manes.caffeine</groupId>
-                <artifactId>caffeine</artifactId>
-                <exclusions>
-                    <!--  do not bring in the annotations -->
-                    <exclusion>
-                        <groupId>org.checkerframework</groupId>
-                        <artifactId>checker-qual</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.google.errorprone</groupId>
-                        <artifactId>error_prone_annotations</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

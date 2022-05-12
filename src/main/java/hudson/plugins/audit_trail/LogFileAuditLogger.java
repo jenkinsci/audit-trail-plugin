@@ -1,7 +1,9 @@
 package hudson.plugins.audit_trail;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -35,7 +37,7 @@ public class LogFileAuditLogger extends AuditLogger {
 
     @DataBoundConstructor
     public LogFileAuditLogger(String log, int limit, int count, String logSeparator) {
-        this.log = log;
+        this.log = Util.replaceMacro(log, EnvVars.masterEnvVars);
         this.limit = limit;
         this.count = count;
         this.logSeparator = Optional.ofNullable(logSeparator).orElse(DEFAULT_LOG_SEPARATOR);
