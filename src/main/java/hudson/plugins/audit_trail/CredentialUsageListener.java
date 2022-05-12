@@ -23,6 +23,8 @@ import java.util.logging.Logger;
  */
 @Extension
 public class CredentialUsageListener implements CredentialsUseListener {
+    private static final Logger LOGGER = Logger.getLogger(CredentialUsageListener.class.getName());
+
     @Inject
     AuditTrailPlugin configuration;
 
@@ -30,10 +32,9 @@ public class CredentialUsageListener implements CredentialsUseListener {
      * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
      * {@link com.cloudbees.plugins.credentials.Credentials}.
      *
+     * @param c   The used Credentials.
+     * @param run The object using the credentials.
      * @see CredentialsProvider#trackAll(Run, java.util.List)
-     *
-     * @param c     The used Credentials.
-     * @param run   The object using the credentials.
      */
     @Override
     public void onUse(Credentials c, Run run) {
@@ -52,10 +53,9 @@ public class CredentialUsageListener implements CredentialsUseListener {
      * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
      * {@link com.cloudbees.plugins.credentials.Credentials}.
      *
+     * @param c    The used Credentials.
+     * @param node The object using the credentials.
      * @see CredentialsProvider#trackAll(Node, java.util.List)
-
-     * @param c     The used Credentials.
-     * @param node   The object using the credentials.
      */
     @Override
     public void onUse(Credentials c, Node node) {
@@ -74,10 +74,9 @@ public class CredentialUsageListener implements CredentialsUseListener {
      * Triggered when the {@link com.cloudbees.plugins.credentials.CredentialsProvider} accesses
      * {@link com.cloudbees.plugins.credentials.Credentials}.
      *
+     * @param c    The used Credentials.
+     * @param item The object using the credentials.
      * @see CredentialsProvider#trackAll(Item, java.util.List)
-     *
-     * @param c     The used Credentials.
-     * @param item   The object using the credentials.
      */
     @Override
     public void onUse(Credentials c, Item item) {
@@ -109,8 +108,13 @@ public class CredentialUsageListener implements CredentialsUseListener {
                     "credentials type is not supported. See INFO log for more information).");
         }
 
+        String log = builder.toString();
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "Detected credential usage, details: {0}", new Object[]{log});
+        }
+
         for (AuditLogger logger : configuration.getLoggers()) {
-            logger.log(builder.toString());
+            logger.log(log);
         }
     }
 }
