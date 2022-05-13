@@ -1,4 +1,5 @@
 logBuildCause: true
+logCredentialsUsage: true
 loggers:
 - console:
     dateFormat: "yyyy-MM-dd HH:mm:ss:SSS"

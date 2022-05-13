@@ -31,6 +31,7 @@ public class ConfigurationAsCodeTest {
     AuditTrailPlugin plugin = extensionList.get(0);
     assertEquals(".*/(?:configSubmit|doUninstall|doDelete|postBuildResult|enable|disable|cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|cancelQuietDown|quietDown|restart|exit|safeExit)", plugin.getPattern());
     assertTrue(plugin.getLogBuildCause());
+    assertTrue(plugin.shouldLogCredentialsUsage());
     assertEquals(3, plugin.getLoggers().size());
 
     //first logger
