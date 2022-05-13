@@ -12,7 +12,7 @@
     <artifactId>audit-trail</artifactId>
     <packaging>hpi</packaging>
     <name>Audit Trail</name>
-    <version>3.11</version>
+    <version>3.12-SNAPSHOT</version>
     <properties>
         <jenkins.version>2.340</jenkins.version>
         <java.level>8</java.level>
@@ -25,7 +25,7 @@
         <connection>scm:git:git://github.com/jenkinsci/audit-trail-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/audit-trail-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/audit-trail-plugin</url>
-        <tag>audit-trail-3.11</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
