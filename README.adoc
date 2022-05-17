@@ -70,6 +70,10 @@ Will log the cause of a build. Defaults to true.
 Will log usage of credentials as long as they are consumed through the https://plugins.jenkins.io/credentials/[Credentials plugin].
 Defaults to true.
 
+=== Log Groovy script usage
+
+Will log potentially dangerous groovy scripts, for example from the script console. Defaults to true.
+
 === About the client IP-address appearing in the logs
 ====
 The plugin uses a method that cannot guarantee that the actual IP of the client is captured.
