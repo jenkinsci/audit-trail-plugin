@@ -1,6 +1,7 @@
 package hudson.plugins.audit_trail;
 
 import hudson.Extension;
+import hudson.model.User;
 import jenkins.model.Jenkins;
 import jenkins.model.ScriptListener;
 import org.kohsuke.stapler.StaplerRequest;
@@ -31,16 +32,23 @@ public class ScriptUsageListener implements ScriptListener {
      *
      * @see Jenkins#_doScript(StaplerRequest, org.kohsuke.stapler.StaplerResponse, javax.servlet.RequestDispatcher, hudson.remoting.VirtualChannel, hudson.security.ACL)
      * @param script The script to be executed.
-     * @param origin Descriptive identifier of the origin that is responsible for executing the script (Console, Run, ...).
+     * @param origin Descriptive identifier of the origin where the script is executed (Controller, Agent ID, Run ID).
+     * @param u If available, the user that executed the script. Can be null.
      */
+
     @Override
-    public void onScript(String script, String origin) {
+    public void onScript(String script, String origin, User u) {
         if (!configuration.getLogScriptUsage()) {
             return;
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("A groovy script was executed. Origin: ");
-        builder.append(origin);
+
+        if (u != null) {
+            builder.append(String.format("A groovy script was executed by user %s. Origin: %s. ", u.getId(), origin));
+        } else {
+            builder.append(String.format("A groovy script was executed. Origin: %s.", origin));
+        }
+
         builder.append("\nThe executed script: \n");
         builder.append(script);
         String log = builder.toString();
