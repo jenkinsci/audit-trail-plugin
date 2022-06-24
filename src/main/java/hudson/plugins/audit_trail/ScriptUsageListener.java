@@ -44,7 +44,7 @@ public class ScriptUsageListener implements ScriptListener {
         StringBuilder builder = new StringBuilder();
 
         if (u != null) {
-            builder.append(String.format("A groovy script was executed by user %s. Origin: %s. ", u.getId(), origin));
+            builder.append(String.format("A groovy script was executed by user '%s'. Origin: %s. ", u.getId(), origin));
         } else {
             builder.append(String.format("A groovy script was executed. Origin: %s.", origin));
         }

@@ -71,7 +71,6 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private static final Logger LOGGER = Logger.getLogger(AuditTrailPlugin.class.getName());
     private boolean logBuildCause = true;
     private boolean logCredentialsUsage = true;
-
     private boolean logScriptUsage = true;
 
     private List<AuditLogger> loggers = new ArrayList<>();
