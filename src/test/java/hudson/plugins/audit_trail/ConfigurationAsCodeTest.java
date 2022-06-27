@@ -32,6 +32,7 @@ public class ConfigurationAsCodeTest {
     assertEquals(".*/(?:configSubmit|doUninstall|doDelete|postBuildResult|enable|disable|cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|cancelQuietDown|quietDown|restart|exit|safeExit)", plugin.getPattern());
     assertTrue(plugin.getLogBuildCause());
     assertTrue(plugin.shouldLogCredentialsUsage());
+    assertTrue(plugin.shouldLogBuildCause());
     assertEquals(3, plugin.getLoggers().size());
 
     //first logger
