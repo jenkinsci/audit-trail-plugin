@@ -71,6 +71,8 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private static final Logger LOGGER = Logger.getLogger(AuditTrailPlugin.class.getName());
     private boolean logBuildCause = true;
     private boolean logCredentialsUsage = true;
+    private boolean logScriptUsage = true;
+
     private List<AuditLogger> loggers = new ArrayList<>();
 
     private transient String log;
@@ -116,6 +118,8 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     public boolean getLogCredentialsUsage() { return shouldLogCredentialsUsage(); }
 
     public boolean shouldLogCredentialsUsage() { return logCredentialsUsage; }
+
+    public boolean getLogScriptUsage() { return logScriptUsage; }
 
     public List<AuditLogger> getLoggers() { return loggers; }
 
@@ -165,6 +169,11 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         save();
     }
 
+    @DataBoundSetter
+    public void setLogScriptUsage(boolean logScriptUsage) {
+        this.logScriptUsage = logScriptUsage;
+        save();
+    }
     private void updateFilterPattern() {
         try {
             AuditTrailFilter.setPattern(pattern);
