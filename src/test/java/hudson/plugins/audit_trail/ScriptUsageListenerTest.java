@@ -2,6 +2,7 @@ package hudson.plugins.audit_trail;
 
 import hudson.Util;
 import hudson.cli.GroovyCommand;
+import hudson.cli.GroovyshCommand;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,7 +55,7 @@ public class ScriptUsageListenerTest {
     }
 
     @Test
-    public void cliUsageIsLogged() throws Exception {
+    public void groovyCliUsageIsLogged() throws Exception {
         String logFileName = "cliUsageIsProperlyLogged.log";
         File logFile = new File(tmpDir.getRoot(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
@@ -67,7 +68,24 @@ public class ScriptUsageListenerTest {
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue("logged actions: " + log, Pattern.compile(
-                ".*A groovy script was executed\\. Origin: CLI.*The executed script:.*"
+                ".*A groovy script was executed\\. Origin: CLI/GroovyCommand.*The executed script:.*"
+                        + Pattern.quote(script) + ".*", Pattern.DOTALL).matcher(log).matches());
+    }
+
+    @Test
+    public void groovyShCliUsageIsLogged() throws Exception {
+        String logFileName = "cliUsageIsProperlyLogged2.log";
+        File logFile = new File(tmpDir.getRoot(), logFileName);
+        JenkinsRule.WebClient wc = r.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
+
+        GroovyshCommand cmd = new GroovyshCommand();
+        InputStream scriptStream = new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8));
+        cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
+
+        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        assertTrue("logged actions: " + log, Pattern.compile(
+                ".*A groovy script was executed\\. Origin: CLI/GroovySh.*The executed script:.*"
                         + Pattern.quote(script) + ".*", Pattern.DOTALL).matcher(log).matches());
     }
     @Test
