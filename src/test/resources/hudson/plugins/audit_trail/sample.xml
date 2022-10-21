@@ -6,6 +6,7 @@
     <logBuildCause>true</logBuildCause>
     <loggers>
         <hudson.plugins.audit__trail.LogFileAuditLogger>
+            <rotateDaily>false</rotateDaily>
             <log>/tmp/xml-logs</log>
             <limit>100</limit>
             <count>5</count>

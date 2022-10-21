@@ -10,6 +10,7 @@ loggers:
     limit: 666
     log: "/log/location"
     logSeparator: ";"
+    rotateDaily: false
 - syslog:
     appName: "jenkins"
     facility: "DAEMON"

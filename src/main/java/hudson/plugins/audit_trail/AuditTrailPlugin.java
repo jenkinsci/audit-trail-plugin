@@ -212,7 +212,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
             if (loggers == null) {
                 loggers = new ArrayList<>();
             }
-            LogFileAuditLogger logger = new LogFileAuditLogger(log, 1, 1, null);
+            LogFileAuditLogger logger = new LogFileAuditLogger(log, 1, 1, null, false);
             if (!loggers.contains(logger))
                 loggers.add(logger);
             log = null;
