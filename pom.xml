@@ -119,7 +119,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-2.332.x</artifactId>
-                <version>1246.va_b_50630c1d19</version>
+                <version>1678.vc1feb_6a_3c0f1</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
