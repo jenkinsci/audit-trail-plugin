@@ -27,10 +27,6 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
-
 /**
  * Created by Pierre Beitz
  * on 18/11/2019.
@@ -60,7 +56,7 @@ public class AuditTrailFilterTest {
         }
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        Assert.assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
     }
 
     @Issue("JENKINS-15731")
@@ -83,7 +79,7 @@ public class AuditTrailFilterTest {
         j.submit(form);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        Assert.assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
     }
 
     @Test
@@ -113,11 +109,11 @@ public class AuditTrailFilterTest {
 
         // Check that the action was logged in the file
         String log = Util.loadFile(new File(tmpDir.getRoot(), logRotateComputedName), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        Assert.assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
 
         // Check that there is only one daily log file in the directory
         String directoryPath = logFile.getParent();
         Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
-        assertThat(directoryFiles.size(), is(1));
+        Assert.assertEquals(directoryFiles.size(), 1);
     }
 }
