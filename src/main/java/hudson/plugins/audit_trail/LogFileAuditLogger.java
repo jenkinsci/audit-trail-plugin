@@ -73,7 +73,7 @@ public class LogFileAuditLogger extends AuditLogger {
     public LogFileAuditLogger(String log, int limit, int count, String logSeparator, boolean rotateDaily) {
         this.log = Util.replaceMacro(log, EnvVars.masterEnvVars);
         this.basePattern = Paths.get(log);
-        this.limit = rotateDaily ? 0 : limit;;
+        this.limit = rotateDaily ? 0 : limit;
         this.count = count;
         this.logSeparator = Optional.ofNullable(logSeparator).orElse(DEFAULT_LOG_SEPARATOR);
         this.rotateDaily = rotateDaily;
@@ -90,10 +90,15 @@ public class LogFileAuditLogger extends AuditLogger {
      * log file saved on disk (if present), or if not present, to the current instant.
      */
     private void initializeDailyRotation() {
-        if (basePattern.getParent().toFile().exists()) {
-            String directoryPath = basePattern.getParent().toString();
+        Path directoryPath = basePattern.getParent();
+        boolean directoryExists = false;
+        if (directoryPath != null) {
+            directoryExists = directoryPath.toFile().exists();
+        }
+
+        if (directoryExists) {
             // audit-log.log-2022-10-19-15-50.0
-            Collection<File> files = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + FilenameUtils.getName(basePattern.toString()) + DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
+            Collection<File> files = FileUtils.listFiles(new File(directoryPath.toString()), new RegexFileFilter(".*" + FilenameUtils.getName(basePattern.toString()) + DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
             if (files.size() > 0) {
                 List<File> orderedList = files.stream().sorted(LASTMODIFIED_REVERSE).collect(Collectors.toList());
                 File lastFile = orderedList.get(0);
@@ -130,27 +135,35 @@ public class LogFileAuditLogger extends AuditLogger {
     }
 
     protected static String computePattern(ZonedDateTime initInstant, Path basePattern) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
         String formattedInstant = formatter.format(initInstant);
         String computedFileName = String.format("%s-%s", FilenameUtils.getName(basePattern.toString()) , formattedInstant);
         return computedFileName;
     }
 
     protected String computePattern() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
         String formattedInstant = formatter.format(initInstant);
         String computedFileName = String.format("%s-%s", FilenameUtils.getName(basePattern.toString()) , formattedInstant);
-        return basePattern.getParent().resolve(computedFileName).toString();
+        Path parentFolder = basePattern.getParent();
+        if (parentFolder != null) {
+            return parentFolder.resolve(computedFileName).toString();
+        }
+        return computedFileName;
     }
 
     private void removeOldFiles() {
-        String directoryPath = FilenameUtils.getFullPath(basePattern.getParent().toString());
-        Collection<File> files = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + FilenameUtils.getName(basePattern.toString())  + DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
-        if (files.size() > count) {
-            List<File> orderedList = files.stream().sorted(LASTMODIFIED_REVERSE).collect(Collectors.toList());
-            List<File> toDelete = orderedList.subList(count, orderedList.size());
-            for (File file: toDelete) {
-                file.delete();
+        Path directoryPath = basePattern.getParent();
+        if (directoryPath != null) {
+            Collection<File> files = FileUtils.listFiles(directoryPath.toFile(), new RegexFileFilter(".*" + FilenameUtils.getName(basePattern.toString()) + DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
+            if (files.size() > count) {
+                List<File> orderedList = files.stream().sorted(LASTMODIFIED_REVERSE).collect(Collectors.toList());
+                List<File> toDelete = orderedList.subList(count, orderedList.size());
+                for (File file : toDelete) {
+                    if (!file.delete()) {
+                        LOGGER.log(Level.SEVERE, "File {0} could not be removed on rotate overation", file.getName());
+                    }
+                }
             }
         }
     }
