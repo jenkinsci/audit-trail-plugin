@@ -134,13 +134,6 @@ public class LogFileAuditLogger extends AuditLogger {
         removeOldFiles();
     }
 
-    protected static String computePattern(ZonedDateTime initInstant, Path basePattern) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
-        String formattedInstant = formatter.format(initInstant);
-        String computedFileName = String.format("%s-%s", FilenameUtils.getName(basePattern.toString()) , formattedInstant);
-        return computedFileName;
-    }
-
     protected String computePattern() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
         String formattedInstant = formatter.format(initInstant);

@@ -22,10 +22,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
-
 /**
  * Created by Pierre Beitz
  * on 2019-05-05.
@@ -97,9 +93,11 @@ public class LogFileAuditLoggerTest {
      */
     @Test
     public void logFileProperlyRotatingInNextDayWithDailyRotation() throws IOException {
-        ZonedDateTime zonedDateTimeA = ZonedDateTime.now().plusDays(1);
+        ZonedDateTime zonedDateTime1 = ZonedDateTime.now();
+        ZonedDateTime zonedDateTime2 = zonedDateTime1.plusDays(1);
         MockedStatic<ZonedDateTime> mockedLocalDateTime = Mockito.mockStatic(ZonedDateTime.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 
+        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime1);
         // Check that the log file is created with the corresponded format (Today date)
         Path logFile = folder.getRoot().toPath().resolve("file");
         LogFileAuditLogger logFileAuditLogger = new LogFileAuditLogger(logFile.toString(), 0, 2, null, true);
@@ -117,7 +115,7 @@ public class LogFileAuditLoggerTest {
         Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line1"));
 
         // Increase +1 day
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTimeA);
+        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime2);
 
         // Log something else
         logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line2");
