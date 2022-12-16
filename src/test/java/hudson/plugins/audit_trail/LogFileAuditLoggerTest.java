@@ -125,6 +125,8 @@ public class LogFileAuditLoggerTest {
         log = Util.loadFile(logFileRotating.toFile(), StandardCharsets.UTF_8);
         Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line2"));
         Assert.assertFalse(log.contains("configuringAFileLoggerRotatingDaily - line1"));
+
+        mockedLocalDateTime.close();
     }
 
     /**
@@ -170,5 +172,7 @@ public class LogFileAuditLoggerTest {
         String directoryPath = logFile.toFile().getParent();
         Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.toFile().getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
         Assert.assertEquals(directoryFiles.size(),2);
+
+        mockedLocalDateTime.close();
     }
 }
