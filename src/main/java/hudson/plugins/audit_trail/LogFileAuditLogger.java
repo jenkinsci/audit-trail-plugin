@@ -48,21 +48,19 @@ public class LogFileAuditLogger extends AuditLogger {
 
     private static final Logger LOGGER = Logger.getLogger(LogFileAuditLogger.class.getName());
     static final String DEFAULT_LOG_SEPARATOR=" ";
-    protected static final String DAILY_ROTATING_FILE_REGEX_PATTERN = "-[0-9]{4}-[0-9]{2}-[0-9]{2}" + ".*" + "(?<!lck)$";
+    static final String DAILY_ROTATING_FILE_REGEX_PATTERN = "-[0-9]{4}-[0-9]{2}-[0-9]{2}" + ".*" + "(?<!lck)$";
     @Nonnull
     private String logSeparator;
 
     /**
      * If true, enables the daily rotation of the logs. Limit will be configure with a 0 value
      * (unlimitted size), and count will be set-up as 1 for FileHandler.
-     * @see #getRotateDaily()
      */
     public boolean rotateDaily;
 
     private transient FileHandler handler;
     private transient ZonedDateTime initInstant;
     private transient Path basePattern;
-    private transient final Object monitor = new Object();
 
     @Deprecated
     public LogFileAuditLogger(String log, int limit, int count, String logSeparator) {
@@ -80,9 +78,8 @@ public class LogFileAuditLogger extends AuditLogger {
 
         if (rotateDaily) {
             initializeDailyRotation();
-        } else {
-            configure();
         }
+        configure();
     }
 
     /**
@@ -114,7 +111,6 @@ public class LogFileAuditLogger extends AuditLogger {
         if (initInstant == null) {
             initInstant = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
         }
-        configure();
     }
 
     private boolean shouldRotate() {
@@ -134,7 +130,7 @@ public class LogFileAuditLogger extends AuditLogger {
         removeOldFiles();
     }
 
-    protected String computePattern() {
+    String computePattern() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
         String formattedInstant = formatter.format(initInstant);
         String computedFileName = String.format("%s-%s", FilenameUtils.getName(basePattern.toString()) , formattedInstant);
@@ -181,8 +177,8 @@ public class LogFileAuditLogger extends AuditLogger {
     public void log(String event) {
         // to avoid synchronizing the whole method
         if (rotateDaily && shouldRotate()) {
-            synchronized (monitor) {
-                rotate();
+            synchronized (this) {
+                if (shouldRotate()) rotate();
             }
         }
         if (handler == null) return;
@@ -202,10 +198,6 @@ public class LogFileAuditLogger extends AuditLogger {
     @Nonnull
     public String getLogSeparator() {
         return logSeparator;
-    }
-
-    public boolean getRotateDaily() {
-        return rotateDaily;
     }
 
     @Override

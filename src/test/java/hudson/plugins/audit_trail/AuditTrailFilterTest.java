@@ -21,11 +21,9 @@ import org.jvnet.hudson.test.JenkinsRule;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.regex.Pattern;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Pierre Beitz

@@ -95,38 +95,37 @@ public class LogFileAuditLoggerTest {
     public void logFileProperlyRotatingInNextDayWithDailyRotation() throws IOException {
         ZonedDateTime zonedDateTime1 = ZonedDateTime.now();
         ZonedDateTime zonedDateTime2 = zonedDateTime1.plusDays(1);
-        MockedStatic<ZonedDateTime> mockedLocalDateTime = Mockito.mockStatic(ZonedDateTime.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime1);
-        // Check that the log file is created with the corresponded format (Today date)
-        Path logFile = folder.getRoot().toPath().resolve("file");
-        LogFileAuditLogger logFileAuditLogger = new LogFileAuditLogger(logFile.toString(), 0, 2, null, true);
-        logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line1");
-        Path logFileRotating = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern());
-        Assert.assertTrue(logFileRotating.toFile().exists());
+        try (MockedStatic<ZonedDateTime> mockedLocalDateTime = Mockito.mockStatic(ZonedDateTime.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS))) {
+            mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime1);
+            // Check that the log file is created with the corresponded format (Today date)
+            Path logFile = folder.getRoot().toPath().resolve("file");
+            LogFileAuditLogger logFileAuditLogger = new LogFileAuditLogger(logFile.toString(), 0, 2, null, true);
+            logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line1");
+            Path logFileRotating = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern());
+            Assert.assertTrue(logFileRotating.toFile().exists());
 
-        // Check that there is ONLY one file generated at this point (Today date)
-        String directoryPath = logFile.toFile().getParent();
-        Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.toFile().getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
-        Assert.assertEquals(directoryFiles.size(),1);
+            // Check that there is ONLY one file generated at this point (Today date)
+            String directoryPath = logFile.toFile().getParent();
+            Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.toFile().getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
+            Assert.assertEquals(directoryFiles.size(), 1);
 
-        // Log something and check it appears in the logger file
-        String log = Util.loadFile(logFileRotating.toFile(), StandardCharsets.UTF_8);
-        Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line1"));
+            // Log something and check it appears in the logger file
+            String log = Util.loadFile(logFileRotating.toFile(), StandardCharsets.UTF_8);
+            Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line1"));
 
-        // Increase +1 day
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime2);
+            // Increase +1 day
+            mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime2);
 
-        // Log something else
-        logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line2");
+            // Log something else
+            logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line2");
 
-        // Check that the corresponded is the ONLY one which appear on this file (Today +1)
-        logFileRotating = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern());
-        log = Util.loadFile(logFileRotating.toFile(), StandardCharsets.UTF_8);
-        Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line2"));
-        Assert.assertFalse(log.contains("configuringAFileLoggerRotatingDaily - line1"));
-
-        mockedLocalDateTime.close();
+            // Check that the corresponded is the ONLY one which appear on this file (Today +1)
+            logFileRotating = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern());
+            log = Util.loadFile(logFileRotating.toFile(), StandardCharsets.UTF_8);
+            Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line2"));
+            Assert.assertFalse(log.contains("configuringAFileLoggerRotatingDaily - line1"));
+        }
     }
 
     /**
@@ -137,42 +136,41 @@ public class LogFileAuditLoggerTest {
         ZonedDateTime zonedDateTime1 = ZonedDateTime.now();
         ZonedDateTime zonedDateTime2 = zonedDateTime1.plusDays(1);
         ZonedDateTime zonedDateTime3 = zonedDateTime1.plusDays(3);
-        MockedStatic<ZonedDateTime> mockedLocalDateTime = Mockito.mockStatic(ZonedDateTime.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS));
 
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime1);
-        Path logFile = folder.getRoot().toPath().resolve("file");
-        LogFileAuditLogger logFileAuditLogger = new LogFileAuditLogger(logFile.toString(), 0, 2, null, true);
+        try (MockedStatic<ZonedDateTime> mockedLocalDateTime = Mockito.mockStatic(ZonedDateTime.class, Mockito.withSettings().defaultAnswer(Answers.CALLS_REAL_METHODS))) {
+            mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime1);
+            Path logFile = folder.getRoot().toPath().resolve("file");
+            LogFileAuditLogger logFileAuditLogger = new LogFileAuditLogger(logFile.toString(), 0, 2, null, true);
 
-        // Today: Log something
-        logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line1");
-        File  logFileRotating1 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
+            // Today: Log something
+            logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line1");
+            File logFileRotating1 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
 
-        // Today+1 Log something
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime2);
-        logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line2");
-        File logFileRotating2 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
+            // Today+1 Log something
+            mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime2);
+            logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line2");
+            File logFileRotating2 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
 
-        // Today+2 Log something
-        mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime3);
-        logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line3");
-        File logFileRotating3 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
+            // Today+2 Log something
+            mockedLocalDateTime.when(ZonedDateTime::now).thenReturn(zonedDateTime3);
+            logFileAuditLogger.log("configuringAFileLoggerRotatingDaily - line3");
+            File logFileRotating3 = folder.getRoot().toPath().resolve(logFileAuditLogger.computePattern()).toFile();
 
-        // Check that the oldest file got removed after rotation
-        Assert.assertFalse(logFileRotating1.exists());
-        Assert.assertTrue(logFileRotating2.exists());
-        Assert.assertTrue(logFileRotating3.exists());
+            // Check that the oldest file got removed after rotation
+            Assert.assertFalse(logFileRotating1.exists());
+            Assert.assertTrue(logFileRotating2.exists());
+            Assert.assertTrue(logFileRotating3.exists());
 
-        // Check that that files contains their expected content
-        String log = Util.loadFile(logFileRotating2, StandardCharsets.UTF_8);
-        Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line2"));
-        log = Util.loadFile(logFileRotating3, StandardCharsets.UTF_8);
-        Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line3"));
+            // Check that that files contains their expected content
+            String log = Util.loadFile(logFileRotating2, StandardCharsets.UTF_8);
+            Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line2"));
+            log = Util.loadFile(logFileRotating3, StandardCharsets.UTF_8);
+            Assert.assertTrue(log.contains("configuringAFileLoggerRotatingDaily - line3"));
 
-        // Check that there are only two log files
-        String directoryPath = logFile.toFile().getParent();
-        Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.toFile().getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
-        Assert.assertEquals(directoryFiles.size(),2);
-
-        mockedLocalDateTime.close();
+            // Check that there are only two log files
+            String directoryPath = logFile.toFile().getParent();
+            Collection<File> directoryFiles = FileUtils.listFiles(new File(directoryPath), new RegexFileFilter(".*" + logFile.toFile().getName() + LogFileAuditLogger.DAILY_ROTATING_FILE_REGEX_PATTERN), DirectoryFileFilter.DIRECTORY);
+            Assert.assertEquals(directoryFiles.size(), 2);
+        }
     }
 }
