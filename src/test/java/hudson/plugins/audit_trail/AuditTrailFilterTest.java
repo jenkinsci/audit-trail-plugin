@@ -8,10 +8,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,7 +50,7 @@ public class AuditTrailFilterTest {
         }
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), StandardCharsets.UTF_8);
-        Assert.assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
     }
 
     @Issue("JENKINS-15731")
@@ -77,6 +73,6 @@ public class AuditTrailFilterTest {
         j.submit(form);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
-        Assert.assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
     }
 }
