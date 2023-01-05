@@ -3,9 +3,6 @@
     <f:entry title="${%Log Location}" field="log">
       <f:textbox />
     </f:entry>
-    <f:entry title="${%Log File Size MB}" field="limit">
-      <f:textbox />
-    </f:entry>
     <f:entry title="${%Log File Count}" field="count">
       <f:textbox />
     </f:entry>
