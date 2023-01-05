@@ -20,18 +20,10 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 
-/**
- * Created by Pierre Beitz
- * on 2019-05-05.
- */
 public class LogFileDailyRotationAuditLoggerTest {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
-
 
     /**
      * Ensures that if Daily Rotation is enabled a subdirectory with the corresponded logger
