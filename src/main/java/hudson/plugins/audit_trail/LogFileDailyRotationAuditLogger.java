@@ -49,7 +49,7 @@ public class LogFileDailyRotationAuditLogger extends AbstractLogFileAuditLogger 
 
     @DataBoundConstructor
     public LogFileDailyRotationAuditLogger(String log, int count, String logSeparator) {
-        super(log, count, 0, logSeparator);
+        super(log, count, logSeparator);
         this.basePattern = Paths.get(log);
         initializeDailyRotation();
     }
@@ -153,20 +153,12 @@ public class LogFileDailyRotationAuditLogger extends AbstractLogFileAuditLogger 
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        LogFileDailyRotationAuditLogger that = (LogFileDailyRotationAuditLogger) o;
-
-        if (initInstant != null ? !initInstant.equals(that.initInstant) : that.initInstant != null) return false;
-        return basePattern != null ? basePattern.equals(that.basePattern) : that.basePattern == null;
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        int result = initInstant != null ? initInstant.hashCode() : 0;
-        result = 31 * result + (basePattern != null ? basePattern.hashCode() : 0);
-        return result;
+        return super.hashCode();
     }
 
     @Extension

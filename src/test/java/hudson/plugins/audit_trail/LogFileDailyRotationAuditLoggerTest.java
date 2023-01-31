@@ -7,7 +7,6 @@ import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Answers;
 import org.mockito.MockedStatic;

@@ -14,9 +14,12 @@ import java.util.logging.FileHandler;
  */
 public class LogFileAuditLogger extends AbstractLogFileAuditLogger {
 
+    private int limit = 1;
+
     @DataBoundConstructor
     public LogFileAuditLogger(String log, int limit, int count, String logSeparator) {
-        super(log, count, limit, logSeparator);
+        super(log, count, logSeparator);
+        this.limit = limit;
         configure();
     }
 
@@ -32,6 +35,20 @@ public class LogFileAuditLogger extends AbstractLogFileAuditLogger {
     @Override
     FileHandler getLogFileHandler() throws IOException {
         return new FileHandler(getLog(), getLimit() * 1024 * 1024, getCount(), true);
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
     @Extension

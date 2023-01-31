@@ -28,14 +28,12 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
     private String logSeparator;
     private String log;
     private int count = 1;
-    private int limit = 1;
 
     private transient FileHandler handler;
 
-    public AbstractLogFileAuditLogger(String log, int count, int limit, String logSeparator) {
+    public AbstractLogFileAuditLogger(String log, int count, String logSeparator) {
         this.log = Util.replaceMacro(log, EnvVars.masterEnvVars);
         this.count = count;
-        this.limit = limit;
         this.logSeparator = Optional.ofNullable(logSeparator).orElse(DEFAULT_LOG_SEPARATOR);
     }
 
@@ -114,11 +112,29 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
         return count;
     }
 
-    public int getLimit() {
-        return limit;
-    }
-
     public FileHandler getHandler() {
         return handler;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractLogFileAuditLogger that = (AbstractLogFileAuditLogger) o;
+
+        if (count != that.count) return false;
+        if (!logSeparator.equals(that.logSeparator)) return false;
+        if (log != null ? !log.equals(that.log) : that.log != null) return false;
+        return handler != null ? handler.equals(that.handler) : that.handler == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = logSeparator.hashCode();
+        result = 31 * result + (log != null ? log.hashCode() : 0);
+        result = 31 * result + count;
+        result = 31 * result + (handler != null ? handler.hashCode() : 0);
+        return result;
     }
 }
