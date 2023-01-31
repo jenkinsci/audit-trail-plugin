@@ -151,16 +151,6 @@ public class LogFileDailyRotationAuditLogger extends AbstractLogFileAuditLogger 
         super.log(event);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
     @Extension
     public static class DescriptorImpl extends Descriptor<AuditLogger> {
 
