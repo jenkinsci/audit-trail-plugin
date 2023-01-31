@@ -6,17 +6,14 @@ image:https://img.shields.io/jenkins/plugin/i/audit-trail.svg?color=blue[https:/
 
 This plugin keeps a log of who performed particular Jenkins operations, such as configuring jobs.
 
-This plugin adds an _Audit Trail_ section in the main Jenkins
-configuration page.
+This plugin adds an _Audit Trail_ section in the main Jenkins configuration page.
 On this page, you can configure log destination and settings
 (eg file size and number of rotating log files), and a URI pattern for
 requests to be logged.
 The default options select most actions with
 significant effect such as creating/configuring/deleting jobs and views
 or delete/save-forever/start a build.
-The log is written to disk as
-configured and recent entries can also be viewed in the Manage / System
-Log section.
+The log is sent to the target as configured (writen to disk, to console, sent to Elastic Search or Syslog).
 
 Also see the
 https://wiki.jenkins.io/display/JENKINS/JobConfigHistory+Plugin[JobConfigHistory

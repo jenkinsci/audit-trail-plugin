@@ -24,7 +24,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
      * For instance if your logger use a InputStream, this is were you should close it.
      *
      * @exception  SecurityException  if a security manager exists and if
-     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     *             the caller does not have <code>LoggingPermission("control")</code>.
      */
     public void cleanUp() throws SecurityException {
         // default does nothing
