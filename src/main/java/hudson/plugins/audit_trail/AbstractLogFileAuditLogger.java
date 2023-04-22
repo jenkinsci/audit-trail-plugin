@@ -4,7 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Util;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -24,7 +24,7 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
     private static final Logger LOGGER = Logger.getLogger(AbstractLogFileAuditLogger.class.getName());
     static final String DEFAULT_LOG_SEPARATOR =" ";
 
-    @Nonnull
+    @NonNull
     private String logSeparator;
     private String log;
     private int count = 1;
@@ -99,7 +99,7 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
 
     abstract FileHandler getLogFileHandler() throws IOException;
 
-    @Nonnull
+    @NonNull
     public String getLogSeparator() {
         return logSeparator;
     }
