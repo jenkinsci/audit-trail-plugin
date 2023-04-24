@@ -11,7 +11,7 @@ import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
