@@ -23,8 +23,8 @@
  */
 package hudson.plugins.audit_trail;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import hudson.Util;
 import jenkins.model.GlobalConfiguration;
 
