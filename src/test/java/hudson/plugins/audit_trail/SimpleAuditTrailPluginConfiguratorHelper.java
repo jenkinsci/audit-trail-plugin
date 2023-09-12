@@ -1,7 +1,7 @@
 package hudson.plugins.audit_trail;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
@@ -53,11 +53,11 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
         configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
         wc.waitForBackgroundJavaScript(TIMEOUT);
-        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValueAttribute(logFile.getPath());
-        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValueAttribute("1");
-        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValueAttribute("2");
-        form.getInputByName(LOG_FILE_LOG_SEPARATOR_INPUT_NAME).setValueAttribute(DEFAULT_LOG_SEPARATOR);
-        form.getInputByName(PATTERN_INPUT_NAME).setValueAttribute(pattern);
+        form.getInputByName(LOG_LOCATION_INPUT_NAME).setValue(logFile.getPath());
+        form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValue("1");
+        form.getInputByName(LOG_FILE_COUNT_INPUT_NAME).setValue("2");
+        form.getInputByName(LOG_FILE_LOG_SEPARATOR_INPUT_NAME).setValue(DEFAULT_LOG_SEPARATOR);
+        form.getInputByName(PATTERN_INPUT_NAME).setValue(pattern);
         form.getInputByName(LOG_BUILD_CAUSE_INPUT_NAME).setChecked(logBuildCause);
         form.getInputByName(LOG_CREDENTIALS_USAGE_INPUT_NAME).setChecked(logCredentialsUsage);
         j.submit(form);
