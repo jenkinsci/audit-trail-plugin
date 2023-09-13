@@ -10,10 +10,9 @@ import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-
-import javax.inject.Inject;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -32,7 +31,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        if(configuration.shouldLogBuildCause()) {
+        if (configuration.shouldLogBuildCause()) {
             StringBuilder builder = new StringBuilder(100);
             dumpCauses(run, builder);
             dumpParameters(run, builder);
@@ -45,18 +44,18 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onFinalized(Run run) {
-        if(configuration.shouldLogBuildCause()) {
+        if (configuration.shouldLogBuildCause()) {
             StringBuilder builder = new StringBuilder(100);
             dumpCauses(run, builder);
             dumpParameters(run, builder);
 
             for (AuditLogger logger : configuration.getLoggers()) {
-                String message = run.getFullDisplayName() +
-                      " " + builder.toString() +
-                      " on node " + buildNodeName(run) +
-                      " started at " + run.getTimestampString2() +
-                      " completed in " + run.getDuration() + "ms" +
-                      " completed: " + run.getResult();
+                String message = run.getFullDisplayName() + " "
+                        + builder.toString() + " on node "
+                        + buildNodeName(run) + " started at "
+                        + run.getTimestampString2() + " completed in "
+                        + run.getDuration() + "ms" + " completed: "
+                        + run.getResult();
                 logger.log(message);
             }
         }
@@ -66,11 +65,9 @@ public class AuditTrailRunListener extends RunListener<Run> {
         builder.append(", Parameters:[");
         ParametersAction parameters = run.getAction(ParametersAction.class);
         if (parameters != null) {
-            builder.append(
-                  StreamSupport.stream(parameters.spliterator(), false)
-                        .map(this::prettyPrintParameter)
-                        .collect(Collectors.joining(", "))
-            );
+            builder.append(StreamSupport.stream(parameters.spliterator(), false)
+                    .map(this::prettyPrintParameter)
+                    .collect(Collectors.joining(", ")));
         }
         builder.append("]");
     }

@@ -1,14 +1,13 @@
 package hudson.plugins.audit_trail;
 
 import hudson.EnvVars;
+import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
-
-import java.nio.file.Path;
 
 /**
  * Created by Pierre Beitz

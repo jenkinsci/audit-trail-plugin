@@ -1,14 +1,14 @@
 package hudson.plugins.audit_trail;
 
+import static hudson.plugins.audit_trail.AuditTrailPlugin.DEFAULT_PATTERN;
+import static org.junit.Assert.assertEquals;
+
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
-
-import static hudson.plugins.audit_trail.AuditTrailPlugin.DEFAULT_PATTERN;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Pierre Beitz

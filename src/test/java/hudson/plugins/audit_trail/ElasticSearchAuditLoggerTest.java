@@ -1,16 +1,14 @@
 package hudson.plugins.audit_trail;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import jenkins.model.GlobalConfiguration;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import org.htmlunit.html.HtmlForm;
-import org.htmlunit.html.HtmlPage;
-
-import jenkins.model.GlobalConfiguration;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author <a href="mailto:alexander.russell@sap.com">Alex Russell</a>
@@ -18,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class ElasticSearchAuditLoggerTest {
 
     private static String esUrl = "https://localhost/myindex/jenkins";
+
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 

@@ -6,7 +6,6 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
-
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  * @author Pierre Beitz

@@ -23,16 +23,13 @@
  */
 package hudson.plugins.audit_trail;
 
+import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
+
 import com.google.inject.Injector;
 import hudson.Extension;
 import hudson.init.Initializer;
 import hudson.model.User;
 import hudson.util.PluginServletFilter;
-import jenkins.model.Jenkins;
-
-import javax.inject.Inject;
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,8 +38,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
+import javax.inject.Inject;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import jenkins.model.Jenkins;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
@@ -71,8 +70,7 @@ public class AuditTrailFilter implements Filter {
         // used by the injector
     }
 
-    public void init(FilterConfig fc) {
-    }
+    public void init(FilterConfig fc) {}
 
     static void setPattern(String pattern) throws PatternSyntaxException {
         uriPattern = Pattern.compile(pattern);
@@ -80,7 +78,7 @@ public class AuditTrailFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
-          throws IOException, ServletException {
+            throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
         String uri = getPathInfo(req);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
@@ -95,7 +93,8 @@ public class AuditTrailFilter implements Filter {
                 extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(req.getParameter("id")));
                 // not sure of the intent of the original author
                 // it looks to me we should always log the query parameters
-                // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded plugin
+                // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded
+                // plugin
                 // let's see if this becomes a wanted feature...
                 uri += "?" + req.getQueryString();
             } else if (uri.contains("/createItem")) {
@@ -103,7 +102,8 @@ public class AuditTrailFilter implements Filter {
             }
 
             if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINE, "Audit request {0} by user {1} from {2}", new Object[]{uri, username, remoteIP});
+                LOGGER.log(
+                        Level.FINE, "Audit request {0} by user {1} from {2}", new Object[] {uri, username, remoteIP});
 
             onRequest(uri, extra, username, remoteIP);
         } else {
@@ -123,15 +123,15 @@ public class AuditTrailFilter implements Filter {
     }
 
     private String getFormattedQueueItemUrlFromItemId(int itemId) {
-        return formatExtraInfoString(Jenkins.getInstance().getQueue().getItem(itemId).task.getUrl());
+        return formatExtraInfoString(
+                Jenkins.getInstance().getQueue().getItem(itemId).task.getUrl());
     }
 
     private String formatExtraInfoString(String toFormat) {
         return String.format(" (%s)", toFormat);
     }
 
-    public void destroy() {
-    }
+    public void destroy() {}
 
     // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
     @Initializer(after = EXTENSIONS_AUGMENTED)
@@ -153,7 +153,8 @@ public class AuditTrailFilter implements Filter {
 
     // See SECURITY-1815
     private static String getPathInfo(HttpServletRequest request) {
-        return canonicalPath(request.getRequestURI().substring(request.getContextPath().length()));
+        return canonicalPath(
+                request.getRequestURI().substring(request.getContextPath().length()));
     }
 
     // Copied from Stapler#canonicalPath

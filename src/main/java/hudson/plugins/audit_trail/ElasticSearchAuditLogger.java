@@ -24,6 +24,20 @@
 
 package hudson.plugins.audit_trail;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
+import hudson.Extension;
+import hudson.model.Descriptor;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -39,9 +53,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.net.ssl.SSLContext;
-
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -61,24 +75,6 @@ import org.apache.http.ssl.TrustStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCertificateCredentials;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
-
-import hudson.Extension;
-import hudson.model.Descriptor;
-import hudson.security.ACL;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import hudson.util.Secret;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
 
 /**
  * AuditLogger implementation to send audit logs to an Elastic Search server.
@@ -122,11 +118,16 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 return;
             }
         }
-        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to Elastic Search server {1}", new Object[]{event, elasticSearchSender.getUrl()});
+        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to Elastic Search server {1}", new Object[] {
+            event, elasticSearchSender.getUrl()
+        });
         try {
             elasticSearchSender.sendMessage(event);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Audit event not sent to Elastic Search server: " + event + " - " + elasticSearchSender.toString(), e);
+            LOGGER.log(
+                    Level.WARNING,
+                    "Audit event not sent to Elastic Search server: " + event + " - " + elasticSearchSender.toString(),
+                    e);
         }
     }
 
@@ -139,7 +140,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         String password = null;
         if (!StringUtils.isBlank(usernamePasswordCredentialsId)) {
             LOGGER.fine("Username/password credentials specified: " + usernamePasswordCredentialsId);
-            StandardUsernamePasswordCredentials usernamePasswordCredentials = getUsernamePasswordCredentials(usernamePasswordCredentialsId);
+            StandardUsernamePasswordCredentials usernamePasswordCredentials =
+                    getUsernamePasswordCredentials(usernamePasswordCredentialsId);
             if (usernamePasswordCredentials != null) {
                 username = usernamePasswordCredentials.getUsername();
                 password = Secret.toString(usernamePasswordCredentials.getPassword());
@@ -149,19 +151,24 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         String clientKeyStorePassword = null;
         if (!StringUtils.isBlank(clientCertificateCredentialsId)) {
             LOGGER.fine("Client certificate specified: " + clientCertificateCredentialsId);
-            StandardCertificateCredentials certificateCredentials = getCertificateCredentials(clientCertificateCredentialsId);
+            StandardCertificateCredentials certificateCredentials =
+                    getCertificateCredentials(clientCertificateCredentialsId);
             if (certificateCredentials != null) {
                 clientKeyStore = certificateCredentials.getKeyStore();
                 clientKeyStorePassword = certificateCredentials.getPassword().getPlainText();
                 LOGGER.fine("Client certificate keystore loaded");
             } else {
-                LOGGER.log(Level.SEVERE, "Unable to find certificate credentials: " + clientCertificateCredentialsId + " - Not creating ElasticSearchSender");
+                LOGGER.log(
+                        Level.SEVERE,
+                        "Unable to find certificate credentials: " + clientCertificateCredentialsId
+                                + " - Not creating ElasticSearchSender");
                 return;
             }
         }
         // Create the sender for Elastic Search
         try {
-            elasticSearchSender = new ElasticSearchSender(url, username, password, clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
+            elasticSearchSender = new ElasticSearchSender(
+                    url, username, password, clientKeyStore, clientKeyStorePassword, skipCertificateValidation);
             LOGGER.log(Level.FINE, "ElasticSearchAuditLogger: {0}", this);
         } catch (IOException ioe) {
             LOGGER.log(Level.SEVERE, "Unable to create ElasticSearchSender", ioe);
@@ -177,10 +184,12 @@ public class ElasticSearchAuditLogger extends AuditLogger {
      */
     private StandardUsernamePasswordCredentials getUsernamePasswordCredentials(String credentialsId) {
         return (StandardUsernamePasswordCredentials) CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class,
-                Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
-          CredentialsMatchers.withId(credentialsId)
-        );
+                CredentialsProvider.lookupCredentials(
+                        StandardUsernamePasswordCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.emptyList()),
+                CredentialsMatchers.withId(credentialsId));
     }
 
     /**
@@ -190,10 +199,12 @@ public class ElasticSearchAuditLogger extends AuditLogger {
      */
     private StandardCertificateCredentials getCertificateCredentials(String credentialsId) {
         return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
-            CredentialsProvider.lookupCredentials(StandardCertificateCredentials.class,
-                Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()),
-            CredentialsMatchers.withId(credentialsId)
-        );
+                CredentialsProvider.lookupCredentials(
+                        StandardCertificateCredentials.class,
+                        Jenkins.getInstance(),
+                        ACL.SYSTEM,
+                        Collections.emptyList()),
+                CredentialsMatchers.withId(credentialsId));
     }
 
     public String getUrl() {
@@ -251,10 +262,14 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         if (url != null ? !url.equals(that.url) : that.url != null) {
             return false;
         }
-        if (usernamePasswordCredentialsId != null ? !usernamePasswordCredentialsId.equals(that.usernamePasswordCredentialsId) : that.usernamePasswordCredentialsId != null) {
+        if (usernamePasswordCredentialsId != null
+                ? !usernamePasswordCredentialsId.equals(that.usernamePasswordCredentialsId)
+                : that.usernamePasswordCredentialsId != null) {
             return false;
         }
-        if (clientCertificateCredentialsId != null ? !clientCertificateCredentialsId.equals(that.clientCertificateCredentialsId) : that.clientCertificateCredentialsId != null) {
+        if (clientCertificateCredentialsId != null
+                ? !clientCertificateCredentialsId.equals(that.clientCertificateCredentialsId)
+                : that.clientCertificateCredentialsId != null) {
             return false;
         }
         if (skipCertificateValidation != that.skipCertificateValidation) {
@@ -269,20 +284,21 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((url == null) ? 0 : url.hashCode());
-        result = prime * result + ((usernamePasswordCredentialsId == null) ? 0 : usernamePasswordCredentialsId.hashCode());
-        result = prime * result + ((clientCertificateCredentialsId == null) ? 0 : clientCertificateCredentialsId.hashCode());
+        result = prime * result
+                + ((usernamePasswordCredentialsId == null) ? 0 : usernamePasswordCredentialsId.hashCode());
+        result = prime * result
+                + ((clientCertificateCredentialsId == null) ? 0 : clientCertificateCredentialsId.hashCode());
         result = prime * result + Boolean.hashCode(skipCertificateValidation);
         return result;
     }
 
     @Override
     public String toString() {
-        return "ElasticSearchAuditLogger{" +
-                "url='" + url + "'" +
-                ", usernamePasswordCredentialsId='" + usernamePasswordCredentialsId + "'" +
-                ", clientCertificateCredentialsId='" + clientCertificateCredentialsId + "'" +
-                ", skipCertificateValidation='" + skipCertificateValidation + "'" +
-                "}";
+        return "ElasticSearchAuditLogger{" + "url='"
+                + url + "'" + ", usernamePasswordCredentialsId='"
+                + usernamePasswordCredentialsId + "'" + ", clientCertificateCredentialsId='"
+                + clientCertificateCredentialsId + "'" + ", skipCertificateValidation='"
+                + skipCertificateValidation + "'" + "}";
     }
 
     /**
@@ -296,10 +312,18 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         private final String auth;
         private final boolean skipCertificateValidation;
 
-        public ElasticSearchSender(String url, String username, String password, KeyStore clientKeyStore, String clientKeyStorePassword, boolean skipCertificateValidation) throws IOException, GeneralSecurityException {
+        public ElasticSearchSender(
+                String url,
+                String username,
+                String password,
+                KeyStore clientKeyStore,
+                String clientKeyStorePassword,
+                boolean skipCertificateValidation)
+                throws IOException, GeneralSecurityException {
             this.url = url;
             if (StringUtils.isNotBlank(username)) {
-                auth = Base64.encodeBase64String((username + ":" + StringUtils.defaultString(password)).getBytes(StandardCharsets.UTF_8));
+                auth = Base64.encodeBase64String(
+                        (username + ":" + StringUtils.defaultString(password)).getBytes(StandardCharsets.UTF_8));
             } else {
                 auth = null;
             }
@@ -315,7 +339,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             return skipCertificateValidation;
         }
 
-        private CloseableHttpClient createHttpClient(KeyStore keyStore, String keyStorePassword, boolean skipCertificateValidation)
+        private CloseableHttpClient createHttpClient(
+                KeyStore keyStore, String keyStorePassword, boolean skipCertificateValidation)
                 throws IOException, GeneralSecurityException {
             TrustStrategy trustStrategy = null;
             if (skipCertificateValidation) {
@@ -352,7 +377,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             // char encoding is set to UTF_8 since this request posts a JSON string
             JSONObject payload = new JSONObject();
             payload.put("message", data);
-            payload.put("@timestamp", DATE_FORMATTER.format(Calendar.getInstance().getTime()));
+            payload.put(
+                    "@timestamp", DATE_FORMATTER.format(Calendar.getInstance().getTime()));
             StringEntity input = new StringEntity(payload.toString(), StandardCharsets.UTF_8);
             input.setContentType(ContentType.APPLICATION_JSON.toString());
             postRequest.setEntity(input);
@@ -399,12 +425,12 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         }
 
         public ListBoxModel doFillUsernamePasswordCredentialsIdItems(
-            @QueryParameter String usernamePasswordCredentialsId,
-            @QueryParameter String url) {
+                @QueryParameter String usernamePasswordCredentialsId, @QueryParameter String url) {
             if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
                 return new StandardListBoxModel().includeCurrentValue(usernamePasswordCredentialsId);
             }
-            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(url).build();
+            List<DomainRequirement> domainRequirements =
+                    URIRequirementBuilder.fromUri(url).build();
             return new StandardListBoxModel()
                     .includeEmptyValue()
                     .includeMatchingAs(
@@ -412,17 +438,18 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                             Jenkins.getInstance(),
                             StandardCredentials.class,
                             domainRequirements,
-                            CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class)))
+                            CredentialsMatchers.anyOf(
+                                    CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class)))
                     .includeCurrentValue(usernamePasswordCredentialsId);
         }
 
         public ListBoxModel doFillClientCertificateCredentialsIdItems(
-            @QueryParameter String clientCertificateCredentialsId,
-            @QueryParameter String url) {
+                @QueryParameter String clientCertificateCredentialsId, @QueryParameter String url) {
             if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
                 return new StandardListBoxModel().includeCurrentValue(clientCertificateCredentialsId);
             }
-            List<DomainRequirement> domainRequirements = URIRequirementBuilder.fromUri(url).build();
+            List<DomainRequirement> domainRequirements =
+                    URIRequirementBuilder.fromUri(url).build();
             return new StandardListBoxModel()
                     .includeEmptyValue()
                     .includeMatchingAs(
@@ -430,7 +457,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                             Jenkins.getInstance(),
                             StandardCertificateCredentials.class,
                             domainRequirements,
-                            CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardCertificateCredentials.class)))
+                            CredentialsMatchers.anyOf(
+                                    CredentialsMatchers.instanceOf(StandardCertificateCredentials.class)))
                     .includeCurrentValue(clientCertificateCredentialsId);
         }
 
@@ -445,8 +473,9 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                     return FormValidation.error("Please specify user and password not as part of the url.");
                 }
 
-                if(StringUtils.isBlank(url.getPath()) || url.getPath().trim().matches("^\\/+$")) {
-                    return FormValidation.warning("Elastic Search requires an index name and document type to be able to index the logs.  eg. https://elastic.mydomain.com/myindex/jenkinslog/");
+                if (StringUtils.isBlank(url.getPath()) || url.getPath().trim().matches("^\\/+$")) {
+                    return FormValidation.warning(
+                            "Elastic Search requires an index name and document type to be able to index the logs.  eg. https://elastic.mydomain.com/myindex/jenkinslog/");
                 }
 
                 url.toURI();
@@ -456,5 +485,4 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             return FormValidation.ok();
         }
     }
-
 }
