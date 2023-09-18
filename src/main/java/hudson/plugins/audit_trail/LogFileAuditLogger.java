@@ -3,10 +3,9 @@ package hudson.plugins.audit_trail;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.io.IOException;
 import java.util.logging.FileHandler;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -24,8 +23,8 @@ public class LogFileAuditLogger extends AbstractLogFileAuditLogger {
     }
 
     @SuppressFBWarnings(
-          value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
-          justification = "value can be null if no config file exists")
+            value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
+            justification = "value can be null if no config file exists")
     Object readResolve() {
         super.readResolve();
         configure();

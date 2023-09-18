@@ -1,10 +1,11 @@
 package hudson.plugins.audit_trail;
 
+import static java.util.logging.Level.CONFIG;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Util;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -17,15 +18,14 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import static java.util.logging.Level.CONFIG;
-
 public abstract class AbstractLogFileAuditLogger extends AuditLogger {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractLogFileAuditLogger.class.getName());
-    static final String DEFAULT_LOG_SEPARATOR =" ";
+    static final String DEFAULT_LOG_SEPARATOR = " ";
 
     @NonNull
     private String logSeparator;
+
     private String log;
     private int count = 1;
 
@@ -70,14 +70,17 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
 
                     @Override
                     public synchronized String format(LogRecord record) {
-                        return dateFormat.format(new Date(record.getMillis())) + getLogSeparator()
-                                + record.getMessage() + '\n';
+                        return dateFormat.format(new Date(record.getMillis()))
+                                + getLogSeparator()
+                                + record.getMessage()
+                                + '\n';
                     }
                 });
                 h.setLevel(CONFIG);
                 handler = h;
             } else {
-                LOGGER.severe("Couldn't configure the plugin, as the file handler wasn't successfully created. You should report this issue");
+                LOGGER.severe(
+                        "Couldn't configure the plugin, as the file handler wasn't successfully created. You should report this issue");
             }
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Couldn't configure the plugin, you should report this issue", ex);
@@ -92,7 +95,7 @@ public abstract class AbstractLogFileAuditLogger extends AuditLogger {
 
     @Override
     public void cleanUp() throws SecurityException {
-        if(handler != null) {
+        if (handler != null) {
             handler.close();
         }
     }

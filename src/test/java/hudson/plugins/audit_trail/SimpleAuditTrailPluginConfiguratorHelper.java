@@ -1,12 +1,11 @@
 package hudson.plugins.audit_trail;
 
+import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
+
+import java.io.File;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.File;
-
-import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
 
 /**
  * Created by Pierre Beitz
@@ -17,9 +16,9 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
     private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
     private static final String LOG_FILE_LOG_SEPARATOR_INPUT_NAME = "_.logSeparator";
-    private static final String PATTERN_INPUT_NAME= "pattern";
-    private static final String LOG_BUILD_CAUSE_INPUT_NAME="logBuildCause";
-    private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME="logCredentialsUsage";
+    private static final String PATTERN_INPUT_NAME = "pattern";
+    private static final String LOG_BUILD_CAUSE_INPUT_NAME = "logBuildCause";
+    private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME = "logCredentialsUsage";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
 
@@ -37,6 +36,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         this.logBuildCause = logBuildCause;
         return this;
     }
+
     public SimpleAuditTrailPluginConfiguratorHelper withLogCredentialsUsage(boolean logCredentialsUsage) {
         this.logCredentialsUsage = logCredentialsUsage;
         return this;

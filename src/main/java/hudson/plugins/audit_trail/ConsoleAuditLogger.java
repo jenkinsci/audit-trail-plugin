@@ -3,17 +3,19 @@ package hudson.plugins.audit_trail;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * @author <a href="mailto:cleclerc@cloudbees.com">Cyrille Le Clerc</a>
  */
 public class ConsoleAuditLogger extends AuditLogger {
-    public enum Output {STD_OUT, STD_ERR}
+    public enum Output {
+        STD_OUT,
+        STD_ERR
+    }
 
     private final Output output;
     private final String dateFormat;
@@ -34,7 +36,7 @@ public class ConsoleAuditLogger extends AuditLogger {
         this.logPrefix = logPrefix;
         this.output = output;
         if (output != Output.STD_ERR && output != Output.STD_OUT) {
-                throw new IllegalArgumentException("Unsupported output " + output);
+            throw new IllegalArgumentException("Unsupported output " + output);
         }
 
         this.dateFormat = dateFormat;
