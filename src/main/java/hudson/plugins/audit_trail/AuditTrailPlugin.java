@@ -119,10 +119,11 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     public boolean shouldLogCredentialsUsage() {
         return logCredentialsUsage;
     }
+
     public boolean shouldDisplayUserName() {
         return displayUserName;
     }
-    
+
     public boolean getDisplayUserName() {
         return shouldDisplayUserName();
     }
