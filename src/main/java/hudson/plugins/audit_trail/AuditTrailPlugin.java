@@ -67,6 +67,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
 
     private static final Logger LOGGER = Logger.getLogger(AuditTrailPlugin.class.getName());
     private boolean logBuildCause = true;
+    private boolean displayUserName = false;
     private boolean logCredentialsUsage = true;
     private List<AuditLogger> loggers = new ArrayList<>();
 
@@ -118,6 +119,13 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     public boolean shouldLogCredentialsUsage() {
         return logCredentialsUsage;
     }
+    public boolean shouldDisplayUserName() {
+        return displayUserName;
+    }
+    
+    public boolean getDisplayUserName() {
+        return shouldDisplayUserName();
+    }
 
     public List<AuditLogger> getLoggers() {
         return loggers;
@@ -166,6 +174,12 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     @DataBoundSetter
     public void setLogCredentialsUsage(boolean logCredentialsUsage) {
         this.logCredentialsUsage = logCredentialsUsage;
+        save();
+    }
+
+    @DataBoundSetter
+    public void setDisplayUserName(boolean displayUserName) {
+        this.displayUserName = displayUserName;
         save();
     }
 

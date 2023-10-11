@@ -4,6 +4,7 @@
         .*/(?:configSubmit|doDelete|postBuildResult|enable|disable|cancelQueue|stop|toggleLogKeep|doWipeOutWorkspace|createItem|createView|toggleOffline|cancelQuietDown|quietDown|restart|exit|safeExit|cancelItem|updateSubmit)
     </pattern>
     <logBuildCause>true</logBuildCause>
+    <displayUserName>false</displayUserName>
     <loggers>
         <hudson.plugins.audit__trail.LogFileAuditLogger>
             <log>/tmp/xml-logs-12848</log>

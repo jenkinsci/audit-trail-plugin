@@ -83,7 +83,7 @@ public class AuditTrailFilter implements Filter {
         String uri = getPathInfo(req);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
-            String username = user != null ? user.getDisplayName() : "NA";
+            String username = user != null ? (configuration.shouldDisplayUserName()? user.getDisplayName(): user.getId()) : "NA";
             String remoteIP = req.getRemoteAddr();
             String extra = "";
             // For queue items, show what task is in the queue:

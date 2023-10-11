@@ -21,11 +21,13 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME = "logCredentialsUsage";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
+    private static final String DISPLAY_USER_NAME_INPUT_NAME = "displayUserName";
 
     private final File logFile;
 
     private boolean logBuildCause = true;
     private boolean logCredentialsUsage = true;
+    private boolean displayUserName = false;
     private String pattern = ".*/(?:enable|cancelItem|quietDown|createItem)/?.*";
 
     public SimpleAuditTrailPluginConfiguratorHelper(File logFile) {
@@ -34,6 +36,11 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
 
     public SimpleAuditTrailPluginConfiguratorHelper withLogBuildCause(boolean logBuildCause) {
         this.logBuildCause = logBuildCause;
+        return this;
+    }
+
+    public SimpleAuditTrailPluginConfiguratorHelper withDisplayUserName(boolean displayUserName) {
+        this.displayUserName = displayUserName;
         return this;
     }
 
@@ -60,6 +67,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         form.getInputByName(PATTERN_INPUT_NAME).setValue(pattern);
         form.getInputByName(LOG_BUILD_CAUSE_INPUT_NAME).setChecked(logBuildCause);
         form.getInputByName(LOG_CREDENTIALS_USAGE_INPUT_NAME).setChecked(logCredentialsUsage);
+        form.getInputByName(DISPLAY_USER_NAME_INPUT_NAME).setChecked(displayUserName);
         j.submit(form);
     }
 }

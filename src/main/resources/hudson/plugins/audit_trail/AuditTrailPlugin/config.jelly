@@ -18,6 +18,9 @@
       <f:entry title="${%Log credentials usage}">
         <f:checkbox name="logCredentialsUsage" checked="${descriptor.logCredentialsUsage}"/>
       </f:entry>
+      <f:entry title="${%Display Username instead of UserID}">
+        <f:checkbox name="displayUserName" checked="${descriptor.displayUserName}"/>
+      </f:entry>
     </f:advanced>
   </f:section>
 </j:jelly>
