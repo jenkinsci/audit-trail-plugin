@@ -1,6 +1,7 @@
 unclassified:
   audit-trail:
     logBuildCause: true
+    displayUserName: false
     loggers:
       - console:
           dateFormat: "yyyy-MM-dd HH:mm:ss:SSS"
