@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -58,6 +60,8 @@ public class AuditTrailFilter implements Filter {
     @Inject
     private AuditTrailPlugin configuration;
 
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     /**
      * @deprecated as of 2.6
      **/
@@ -77,30 +81,35 @@ public class AuditTrailFilter implements Filter {
         LOGGER.log(Level.FINE, "set pattern to {0}", pattern);
     }
 
+    @Override
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        HttpServletRequest req = (HttpServletRequest) request;
-        String uri = getPathInfo(req);
+        executorService.submit(() -> logRequest((HttpServletRequest) request));
+        chain.doFilter(request, res);
+    }
+
+    private void logRequest(HttpServletRequest request) {
+        String uri = getPathInfo(request);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
             User user = User.current();
             String username = user != null
                     ? (configuration.shouldDisplayUserName() ? user.getDisplayName() : user.getId())
                     : "NA";
-            String remoteIP = req.getRemoteAddr();
+            String remoteIP = request.getRemoteAddr();
             String extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) {
                 extra = extractInfoFromQueueItem(uri);
             } else if (uri.startsWith("/queue/cancelItem")) {
-                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(req.getParameter("id")));
+                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(request.getParameter("id")));
                 // not sure of the intent of the original author
                 // it looks to me we should always log the query parameters
                 // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded
                 // plugin
                 // let's see if this becomes a wanted feature...
-                uri += "?" + req.getQueryString();
+                uri += "?" + request.getQueryString();
             } else if (uri.contains("/createItem")) {
-                extra = formatExtraInfoString(req.getParameter("name"));
+                extra = formatExtraInfoString(request.getParameter("name"));
             }
 
             if (LOGGER.isLoggable(Level.FINE))
@@ -111,7 +120,6 @@ public class AuditTrailFilter implements Filter {
         } else {
             LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
         }
-        chain.doFilter(req, res);
     }
 
     private String extractInfoFromQueueItem(String uri) {
