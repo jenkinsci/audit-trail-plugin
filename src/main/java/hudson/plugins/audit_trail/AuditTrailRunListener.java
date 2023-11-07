@@ -10,6 +10,8 @@ import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
@@ -20,7 +22,10 @@ import javax.inject.Inject;
  */
 @Extension
 public class AuditTrailRunListener extends RunListener<Run> {
+    private static final Logger LOGGER = Logger.getLogger(AuditTrailRunListener.class.getName());
+
     private static final String MASKED = "****";
+    static final String UNKNOWN_NODE = "#unknown#";
 
     @Inject
     AuditTrailPlugin configuration;
@@ -86,13 +91,20 @@ public class AuditTrailRunListener extends RunListener<Run> {
         if (buf.length() == 0) buf.append("Started");
     }
 
-    private String buildNodeName(Run run) {
+    String buildNodeName(Run<?, ?> run) {
         if (run instanceof AbstractBuild) {
-            Node node = ((AbstractBuild) run).getBuiltOn();
+            var abstractBuild = (AbstractBuild<?, ?>) run;
+            Node node = abstractBuild.getBuiltOn();
             if (node != null) {
                 return node.getDisplayName();
             }
+            return abstractBuild.getBuiltOnStr() != null ? abstractBuild.getBuiltOnStr() : "built-in";
+        } else {
+            LOGGER.log(
+                    Level.INFO,
+                    "Run is not an AbstractBuild but a {0}, will log the build node as {1}.",
+                    new Object[] {run.getClass().getName(), UNKNOWN_NODE});
         }
-        return "#unknown#";
+        return UNKNOWN_NODE;
     }
 }

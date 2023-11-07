@@ -1,13 +1,18 @@
 package hudson.plugins.audit_trail;
 
+import static hudson.plugins.audit_trail.AuditTrailRunListener.UNKNOWN_NODE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.BooleanParameterDefinition;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
+import hudson.model.Node;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.PasswordParameterDefinition;
+import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +22,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.mockito.Mockito;
 
 /**
  * Created by Pierre Beitz
@@ -110,5 +116,24 @@ public class AuditTrailRunListenerTest {
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(log.isEmpty());
+    }
+
+    @Issue("JENKINS-71637")
+    @Test
+    public void buildNodeNameIsProperlyExtractedFromTheRun() {
+        var listener = new AuditTrailRunListener();
+
+        var notAbstractBuild = Mockito.mock(Run.class);
+        assertEquals(UNKNOWN_NODE, listener.buildNodeName(notAbstractBuild));
+
+        var abstractBuildWithAnExistingNode = Mockito.mock(AbstractBuild.class);
+        var aNode = Mockito.mock(Node.class);
+        Mockito.when(aNode.getDisplayName()).thenReturn("hello");
+        Mockito.when(abstractBuildWithAnExistingNode.getBuiltOn()).thenReturn(aNode);
+        assertEquals("hello", listener.buildNodeName(abstractBuildWithAnExistingNode));
+
+        var abstractBuildWithANonExistingNode = Mockito.mock(AbstractBuild.class);
+        Mockito.when(abstractBuildWithANonExistingNode.getBuiltOnStr()).thenReturn("world");
+        assertEquals("world", listener.buildNodeName(abstractBuildWithANonExistingNode));
     }
 }
