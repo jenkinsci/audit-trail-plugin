@@ -10,11 +10,16 @@ import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
+import org.jenkinsci.plugins.workflow.actions.ArgumentsAction;
+import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
+import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -99,6 +104,8 @@ public class AuditTrailRunListener extends RunListener<Run> {
                 return node.getDisplayName();
             }
             return abstractBuild.getBuiltOnStr() != null ? abstractBuild.getBuiltOnStr() : "built-in";
+        } else if (run instanceof WorkflowRun) {
+            return printNodes((WorkflowRun) run);
         } else {
             LOGGER.log(
                     Level.INFO,
@@ -106,5 +113,22 @@ public class AuditTrailRunListener extends RunListener<Run> {
                     new Object[] {run.getClass().getName(), UNKNOWN_NODE});
         }
         return UNKNOWN_NODE;
+    }
+
+    public String printNodes(WorkflowRun run) {
+        var exec = run.getExecution();
+        if (exec == null) {
+            return "";
+        }
+        var nodes = StreamSupport.stream(new FlowGraphWalker(exec).spliterator(), false)
+                .filter(n -> n instanceof StepStartNode && n.getDisplayName().contains("node"))
+                .map(ArgumentsAction::getStepArgumentsAsString)
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(";"));
+        if (nodes.isEmpty()) {
+            // it means we didn't find any start node, meaning agent none
+            return "no agent";
+        }
+        return nodes;
     }
 }
