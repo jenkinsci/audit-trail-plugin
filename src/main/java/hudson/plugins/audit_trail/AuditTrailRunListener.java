@@ -120,11 +120,16 @@ public class AuditTrailRunListener extends RunListener<Run> {
         if (exec == null) {
             return "";
         }
+        LOGGER.log(Level.INFO, "------------Node enumeration starting------------");
         var nodes = StreamSupport.stream(new FlowGraphWalker(exec).spliterator(), false)
+                 //TODO remove this log before merging
+                .peek(n -> LOGGER.log(Level.INFO, "Node: {0} | Display name: {1} | StepArgumentsAsString: {2}",
+                                      new Object[]{n, n.getDisplayName(), ArgumentsAction.getStepArgumentsAsString(n)}))
                 .filter(n -> n instanceof StepStartNode && n.getDisplayName().contains("node"))
                 .map(ArgumentsAction::getStepArgumentsAsString)
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(";"));
+        LOGGER.log(Level.INFO, "------------Node enumeration done------------");
         if (nodes.isEmpty()) {
             // it means we didn't find any start node, meaning agent none
             return "no agent";
