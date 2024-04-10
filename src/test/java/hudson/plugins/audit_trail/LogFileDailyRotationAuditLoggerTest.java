@@ -15,6 +15,7 @@ import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Answers;
@@ -23,12 +24,20 @@ import org.mockito.Mockito;
 
 class LogFileDailyRotationAuditLoggerTest {
 
+    @TempDir
+    Path folder;
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(folder.toFile());
+    }
+
     /**
      * Ensures that if Daily Rotation is enabled a subdirectory with the corresponded logger
      * file gets created
      */
     @Test
-    void configuringAFileLoggerWithDailyRotationAndNonExistingParents(@TempDir Path folder) {
+    void configuringAFileLoggerWithDailyRotationAndNonExistingParents() {
         Path logFile = folder.resolve("subdirectory").resolve("file");
         LogFileDailyRotationAuditLogger logFileAuditLogger =
                 new LogFileDailyRotationAuditLogger(logFile.toString(), 1, null);
@@ -41,7 +50,7 @@ class LogFileDailyRotationAuditLoggerTest {
      * A test that ensures that the logger reuses the same file if restarted within the same day
      */
     @Test
-    void logFileIsReusedIfRestartedWithDailyRotation(@TempDir Path folder) throws IOException {
+    void logFileIsReusedIfRestartedWithDailyRotation() throws IOException {
         Path logFile = folder.resolve("file");
         LogFileDailyRotationAuditLogger logFileAuditLogger =
                 new LogFileDailyRotationAuditLogger(logFile.toString(), 0, null);
@@ -70,7 +79,7 @@ class LogFileDailyRotationAuditLoggerTest {
      * A test that ensures that the log file rotates in the next day
      */
     @Test
-    void logFileProperlyRotatingInNextDayWithDailyRotation(@TempDir Path folder) throws IOException {
+    void logFileProperlyRotatingInNextDayWithDailyRotation() throws IOException {
         ZonedDateTime zonedDateTime1 = ZonedDateTime.now();
         ZonedDateTime zonedDateTime2 = zonedDateTime1.plusDays(1);
 
@@ -116,7 +125,7 @@ class LogFileDailyRotationAuditLoggerTest {
      * A test that ensures that old files get removed after rotation
      */
     @Test
-    void oldLogFilesProperlyRemovedWithDailyRotation(@TempDir Path folder) throws IOException {
+    void oldLogFilesProperlyRemovedWithDailyRotation() throws IOException {
         // test seems to be flaky on Windows, let's skip it for now I have no Windows machine to debug
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
         ZonedDateTime zonedDateTime1 = ZonedDateTime.now();

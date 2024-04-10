@@ -6,15 +6,18 @@ import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.HttpMethod;
 import org.htmlunit.WebRequest;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -28,8 +31,16 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 class AuditTrailFilterTest {
     public static final int LONG_DELAY = 50000;
 
+    @TempDir
+    Path tmpDir;
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(tmpDir.toFile());
+    }
+
     @Test
-    void cancelItemLogsTheQueryStringAndTheUser(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void cancelItemLogsTheQueryStringAndTheUser(JenkinsRule j) throws Exception {
         File logFile = tmpDir.resolve("test.log").toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
@@ -56,7 +67,7 @@ class AuditTrailFilterTest {
 
     @Issue("JENKINS-15731")
     @Test
-    void createItemLogsTheNewItemName(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void createItemLogsTheNewItemName(JenkinsRule j) throws Exception {
         File logFile = tmpDir.resolve("create-item.log").toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);

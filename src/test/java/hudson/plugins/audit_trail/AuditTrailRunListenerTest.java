@@ -16,8 +16,11 @@ import hudson.model.PasswordParameterDefinition;
 import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -31,9 +34,17 @@ import org.mockito.Mockito;
 @WithJenkins
 class AuditTrailRunListenerTest {
 
+    @TempDir
+    Path tmpDir;
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(tmpDir.toFile());
+    }
+
     @Issue("JENKINS-12848")
     @Test
-    void jobParametersAreProperlyLogged(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void jobParametersAreProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobParametersAreProperlyLogged.log";
         File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
@@ -57,7 +68,7 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-12848")
     @Test
-    void jobWithoutParameterIsProperlyLogged(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void jobWithoutParameterIsProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobWithoutParameterIsProperlyLogged.log";
         File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
@@ -76,7 +87,7 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-12848")
     @Test
-    void jobWithSecretParameterIsProperlyLogged(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void jobWithSecretParameterIsProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobWithSecretParameterIsProperlyLogged.log";
         File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
@@ -97,7 +108,7 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-62812")
     @Test
-    void ifSetToNotLogBuildCauseShouldNotLogThem(JenkinsRule j, @TempDir Path tmpDir) throws Exception {
+    void ifSetToNotLogBuildCauseShouldNotLogThem(JenkinsRule j) throws Exception {
         String logFileName = "ifSetToNotLogBuildCauseShouldNotLogThem.log";
         File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();

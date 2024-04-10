@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.EnvVars;
+import java.io.IOException;
 import java.nio.file.Path;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -14,9 +17,17 @@ import org.jvnet.hudson.test.Issue;
  */
 class LogFileAuditLoggerTest {
 
+    @TempDir
+    Path folder;
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(folder.toFile());
+    }
+
     @Issue("JENKINS-56108")
     @Test
-    void configuringAFileLoggerWithNonExistingParents(@TempDir Path folder) {
+    void configuringAFileLoggerWithNonExistingParents() {
         Path logFile = folder.resolve("subdirectory").resolve("file");
         new LogFileAuditLogger(logFile.toString(), 5, 1, null);
         assertTrue(logFile.toFile().exists());
@@ -24,10 +35,10 @@ class LogFileAuditLoggerTest {
 
     @Issue("JENKINS-67493")
     @Test
-    void environmentVariablesAreProperlyExpanded(@TempDir Path rootFolder) {
+    void environmentVariablesAreProperlyExpanded() {
         EnvVars.masterEnvVars.put("EXPAND_ME", "expandMe");
-        String logFile = rootFolder.resolve("${EXPAND_ME}").toString();
+        String logFile = folder.resolve("${EXPAND_ME}").toString();
         LogFileAuditLogger logger = new LogFileAuditLogger(logFile, 5, 1, null);
-        assertEquals(rootFolder.resolve("expandMe").toString(), logger.getLog());
+        assertEquals(folder.resolve("expandMe").toString(), logger.getLog());
     }
 }

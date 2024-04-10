@@ -11,9 +11,12 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Item;
 import hudson.slaves.DumbSlave;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -22,8 +25,16 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class CredentialUsageListenerTest {
 
+    @TempDir
+    Path tmpDir;
+
+    @AfterEach
+    void tearDown() throws IOException {
+        FileUtils.deleteDirectory(tmpDir.toFile());
+    }
+
     @Test
-    void jobCredentialUsageIsLogged(JenkinsRule r, @TempDir Path tmpDir) throws Exception {
+    void jobCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "jobCredentialUsageIsProperlyLogged.log";
         File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
@@ -44,7 +55,7 @@ class CredentialUsageListenerTest {
     }
 
     @Test
-    void nodeCredentialUsageIsLogged(JenkinsRule r, @TempDir Path tmpDir) throws Exception {
+    void nodeCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "nodeCredentialUsageIsProperlyLogged.log";
         File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
@@ -66,7 +77,7 @@ class CredentialUsageListenerTest {
     }
 
     @Test
-    void itemCredentialUsageIsLogged(JenkinsRule r, @TempDir Path tmpDir) throws Exception {
+    void itemCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "itemCredentialUsageIsProperlyLogged.log";
         File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
@@ -87,7 +98,7 @@ class CredentialUsageListenerTest {
     }
 
     @Test
-    void disabledLoggingOptionIsRespected(JenkinsRule r, @TempDir Path tmpDir) throws Exception {
+    void disabledLoggingOptionIsRespected(JenkinsRule r) throws Exception {
         String logFileName = "disabledCredentialUsageIsRespected.log";
         File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
