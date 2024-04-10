@@ -2,31 +2,30 @@ package hudson.plugins.audit_trail;
 
 import static io.jenkins.plugins.casc.misc.Util.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.model.CNode;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
 /**
- * Created by Pierre Beitz
- * on 2019-07-20.
+ * @author Pierre Beitz
  */
-public class ConfigurationAsCodeTest {
-
-    @ClassRule
-    @ConfiguredWithCode("jcasc.yml")
-    public static JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class ConfigurationAsCodeTest {
 
     @Issue("JENKINS-57232")
     @Test
-    public void should_support_configuration_as_code() {
+    @ConfiguredWithCode("jcasc.yml")
+    void shouldSupportConfigurationAsCode(JenkinsConfiguredWithCodeRule r) {
         ExtensionList<AuditTrailPlugin> extensionList = r.jenkins.getExtensionList(AuditTrailPlugin.class);
         AuditTrailPlugin plugin = extensionList.get(0);
         assertEquals(
@@ -63,7 +62,8 @@ public class ConfigurationAsCodeTest {
 
     @Issue("JENKINS-57232")
     @Test
-    public void should_support_configuration_export() throws Exception {
+    @ConfiguredWithCode("jcasc.yml")
+    public void should_support_configuration_export(JenkinsConfiguredWithCodeRule r) throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
         CNode auditTrailAttribute = getUnclassifiedRoot(context).get("audit-trail");
