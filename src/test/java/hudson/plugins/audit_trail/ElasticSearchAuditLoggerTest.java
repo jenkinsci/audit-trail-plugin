@@ -1,27 +1,28 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jenkins.model.GlobalConfiguration;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author <a href="mailto:alexander.russell@sap.com">Alex Russell</a>
+ * @author Pierre Beitz
  */
-public class ElasticSearchAuditLoggerTest {
+@WithJenkins
+class ElasticSearchAuditLoggerTest {
 
-    private static String esUrl = "https://localhost/myindex/jenkins";
-
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+    private static final String ES_URL = "https://localhost/myindex/jenkins";
 
     @Test
-    public void shouldConfigureElasticSearchAuditLogger() throws Exception {
+    void shouldConfigureElasticSearchAuditLogger(JenkinsRule jenkinsRule) throws Exception {
         JenkinsRule.WebClient jenkinsWebClient = jenkinsRule.createWebClient();
         HtmlPage configure = jenkinsWebClient.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
@@ -35,17 +36,17 @@ public class ElasticSearchAuditLoggerTest {
         // Then
         // submit configuration page without any errors
         AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
-        assertEquals("amount of loggers", 1, plugin.getLoggers().size());
+        assertEquals(1, plugin.getLoggers().size(), "amount of loggers");
         AuditLogger logger = plugin.getLoggers().get(0);
-        assertTrue("ConsoleAuditLogger should be configured", logger instanceof ElasticSearchAuditLogger);
+        assertInstanceOf(ElasticSearchAuditLogger.class, logger, "ConsoleAuditLogger should be configured");
     }
 
     @Test
-    public void testElasticSearchAuditLogger() throws Exception {
-        ElasticSearchAuditLogger auditLogger = new ElasticSearchAuditLogger(esUrl, true);
+    void testElasticSearchAuditLogger() {
+        ElasticSearchAuditLogger auditLogger = new ElasticSearchAuditLogger(ES_URL, true);
         auditLogger.configure();
-        assertTrue(auditLogger.getElasticSearchSender() != null);
-        assertEquals(esUrl, auditLogger.getElasticSearchSender().getUrl());
-        assertEquals(true, auditLogger.getElasticSearchSender().getSkipCertificateValidation());
+        assertNotNull(auditLogger.getElasticSearchSender());
+        assertEquals(ES_URL, auditLogger.getElasticSearchSender().getUrl());
+        assertTrue(auditLogger.getElasticSearchSender().getSkipCertificateValidation());
     }
 }
