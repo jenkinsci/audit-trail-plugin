@@ -58,7 +58,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
-        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
+        j.getButtonByCaption(form, LOG_FILE_COMBO_TEXT).click();
         wc.waitForBackgroundJavaScript(TIMEOUT);
         form.getInputByName(LOG_LOCATION_INPUT_NAME).setValue(logFile.getPath());
         form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValue("1");

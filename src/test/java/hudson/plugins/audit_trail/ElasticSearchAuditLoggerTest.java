@@ -26,7 +26,7 @@ public class ElasticSearchAuditLoggerTest {
         HtmlPage configure = jenkinsWebClient.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         jenkinsRule.getButtonByCaption(form, "Add Logger").click();
-        configure.getAnchorByText("Elastic Search server").click();
+        jenkinsRule.getButtonByCaption(form, "Elastic Search server").click();
         jenkinsWebClient.waitForBackgroundJavaScript(2000);
 
         // When
