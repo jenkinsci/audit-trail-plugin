@@ -185,10 +185,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private StandardUsernamePasswordCredentials getUsernamePasswordCredentials(String credentialsId) {
         return (StandardUsernamePasswordCredentials) CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
-                        StandardUsernamePasswordCredentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
+                        StandardUsernamePasswordCredentials.class, Jenkins.get(), ACL.SYSTEM, Collections.emptyList()),
                 CredentialsMatchers.withId(credentialsId));
     }
 
@@ -200,10 +197,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
     private StandardCertificateCredentials getCertificateCredentials(String credentialsId) {
         return (StandardCertificateCredentials) CredentialsMatchers.firstOrNull(
                 CredentialsProvider.lookupCredentials(
-                        StandardCertificateCredentials.class,
-                        Jenkins.getInstance(),
-                        ACL.SYSTEM,
-                        Collections.emptyList()),
+                        StandardCertificateCredentials.class, Jenkins.get(), ACL.SYSTEM, Collections.emptyList()),
                 CredentialsMatchers.withId(credentialsId));
     }
 
@@ -426,7 +420,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         public ListBoxModel doFillUsernamePasswordCredentialsIdItems(
                 @QueryParameter String usernamePasswordCredentialsId, @QueryParameter String url) {
-            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 return new StandardListBoxModel().includeCurrentValue(usernamePasswordCredentialsId);
             }
             List<DomainRequirement> domainRequirements =
@@ -435,7 +429,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                     .includeEmptyValue()
                     .includeMatchingAs(
                             ACL.SYSTEM,
-                            Jenkins.getInstance(),
+                            Jenkins.get(),
                             StandardCredentials.class,
                             domainRequirements,
                             CredentialsMatchers.anyOf(
@@ -445,7 +439,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         public ListBoxModel doFillClientCertificateCredentialsIdItems(
                 @QueryParameter String clientCertificateCredentialsId, @QueryParameter String url) {
-            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
+            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
                 return new StandardListBoxModel().includeCurrentValue(clientCertificateCredentialsId);
             }
             List<DomainRequirement> domainRequirements =
@@ -454,7 +448,7 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                     .includeEmptyValue()
                     .includeMatchingAs(
                             ACL.SYSTEM,
-                            Jenkins.getInstance(),
+                            Jenkins.get(),
                             StandardCertificateCredentials.class,
                             domainRequirements,
                             CredentialsMatchers.anyOf(

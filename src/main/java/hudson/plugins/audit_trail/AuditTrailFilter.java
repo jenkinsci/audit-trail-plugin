@@ -84,14 +84,14 @@ public class AuditTrailFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
-        executorService.submit(() -> logRequest((HttpServletRequest) request));
+        User user = User.current();
+        executorService.submit(() -> logRequest((HttpServletRequest) request, user));
         chain.doFilter(request, res);
     }
 
-    private void logRequest(HttpServletRequest request) {
+    private void logRequest(HttpServletRequest request, User user) {
         String uri = getPathInfo(request);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
-            User user = User.current();
             String username = user != null
                     ? (configuration.shouldDisplayUserName() ? user.getDisplayName() : user.getId())
                     : "NA";
@@ -134,7 +134,7 @@ public class AuditTrailFilter implements Filter {
 
     private String getFormattedQueueItemUrlFromItemId(int itemId) {
         return formatExtraInfoString(
-                Jenkins.getInstance().getQueue().getItem(itemId).task.getUrl());
+                Jenkins.get().getQueue().getItem(itemId).task.getUrl());
     }
 
     private String formatExtraInfoString(String toFormat) {
@@ -146,7 +146,7 @@ public class AuditTrailFilter implements Filter {
     // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
     @Initializer(after = EXTENSIONS_AUGMENTED)
     public static void init() throws ServletException {
-        Injector injector = Jenkins.getInstance().getInjector();
+        Injector injector = Jenkins.get().getInjector();
         if (injector == null) {
             return;
         }
