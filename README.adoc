@@ -73,7 +73,7 @@ The plugin uses a method that cannot guarantee that the actual IP of the client 
 https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletRequest.html#getRemoteAddr--[More details]
 Be aware of this limitation, especially if your instance is configured behind a reverse proxy.
 For getting client IP-address correctly it's required to set HTTP-header *X-Forwarded-For* on the reverse proxy side.
-Also follow these https://www.jenkins.io/doc/book/system-administration/reverse-proxy-configuration-troubleshooting/--[recommendations] in order to get round this limitation.
+Also follow these https://www.jenkins.io/doc/book/system-administration/reverse-proxy-configuration-troubleshooting/[recommendations] in order to get round this limitation.
 ====
 
 == Changelog
