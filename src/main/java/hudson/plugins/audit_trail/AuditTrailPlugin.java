@@ -242,7 +242,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     /**
      * Validate regular expression syntax.
      */
-    public FormValidation doRegexCheck(@QueryParameter final String value) throws IOException, ServletException {
+    public FormValidation doCheckPattern(@QueryParameter final String value) throws IOException, ServletException {
         // No permission needed for simple syntax check
         try {
             Pattern.compile(value);
