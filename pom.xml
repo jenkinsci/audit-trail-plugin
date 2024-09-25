@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.81</version>
+    <version>4.88</version>
     <relativePath />
   </parent>
 
@@ -43,7 +43,7 @@
   <properties>
     <changelist>999999-SNAPSHOT</changelist>
     <gitHubRepo>jenkinsci/audit-trail-plugin</gitHubRepo>
-    <jenkins.version>2.440.1</jenkins.version>
+    <jenkins.version>2.452.4</jenkins.version>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
 
@@ -51,8 +51,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId>
-        <version>3221.ve8f7b_fdd149d</version>
+        <artifactId>bom-2.452.x</artifactId>
+        <version>3387.v0f2773fa_3200</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
