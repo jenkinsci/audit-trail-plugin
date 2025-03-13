@@ -25,13 +25,11 @@ package hudson.plugins.audit_trail;
 
 import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
 
-import com.google.inject.Injector;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.init.Initializer;
 import hudson.model.User;
-import hudson.util.PluginServletFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,14 +40,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import jenkins.model.Jenkins;
+import jenkins.util.HttpServletFilter;
 
 /**
  * Servlet filter to watch requests and log those we are interested in.
@@ -57,11 +52,17 @@ import jenkins.model.Jenkins;
  * @author Pierre Beitz
  */
 @Extension
-public class AuditTrailFilter implements Filter {
+public class AuditTrailFilter implements HttpServletFilter {
 
     private static final Logger LOGGER = Logger.getLogger(AuditTrailFilter.class.getName());
 
     private static Pattern uriPattern = null;
+
+    /**
+     * {@code null} until it is safe to look up extensions.
+     */
+    @CheckForNull
+    private AuditTrailPlugin configuration;
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -69,13 +70,13 @@ public class AuditTrailFilter implements Filter {
      * @deprecated as of 2.6
      **/
     @Deprecated
-    public AuditTrailFilter(AuditTrailPlugin plugin) {}
+    public AuditTrailFilter(AuditTrailPlugin plugin) {
+        this.configuration = plugin;
+    }
 
     public AuditTrailFilter() {
         // used by the injector
     }
-
-    public void init(FilterConfig fc) {}
 
     static void setPattern(String pattern) throws PatternSyntaxException {
         uriPattern = Pattern.compile(pattern);
@@ -83,11 +84,10 @@ public class AuditTrailFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse res, FilterChain chain)
-            throws IOException, ServletException {
+    public boolean handle(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServletException {
         User user = User.current();
-        executorService.submit(() -> logRequest((HttpServletRequest) request, user));
-        chain.doFilter(request, res);
+        executorService.submit(() -> logRequest(req, user));
+        return false;
     }
 
     private void logRequest(HttpServletRequest request, User user) {
@@ -122,17 +122,12 @@ public class AuditTrailFilter implements Filter {
     }
 
     private boolean isShouldDisplayUserName() {
-        var configuration = getConfiguration();
         return configuration != null && configuration.shouldDisplayUserName();
     }
 
-    @CheckForNull
-    private AuditTrailPlugin getConfiguration() {
-        if (Jenkins.get().getInitLevel().compareTo(EXTENSIONS_AUGMENTED) >= 0) {
-            return ExtensionList.lookupSingleton(AuditTrailPlugin.class);
-        } else {
-            return null;
-        }
+    @Initializer(after = EXTENSIONS_AUGMENTED)
+    public void initializeConfiguration() {
+        configuration = ExtensionList.lookupSingleton(AuditTrailPlugin.class);
     }
 
     private String extractInfoFromQueueItem(String uri) {
@@ -154,20 +149,7 @@ public class AuditTrailFilter implements Filter {
         return String.format(" (%s)", toFormat);
     }
 
-    public void destroy() {}
-
-    // the default milestone doesn't seem right, as the injector is not available yet (at least with the JenkinsRule)
-    @Initializer(after = EXTENSIONS_AUGMENTED)
-    public static void init() throws ServletException {
-        Injector injector = Jenkins.get().getInjector();
-        if (injector == null) {
-            return;
-        }
-        PluginServletFilter.addFilter(injector.getInstance(AuditTrailFilter.class));
-    }
-
     private void onRequest(String uri, String extra, String username, String remoteIP) {
-        AuditTrailPlugin configuration = getConfiguration();
         if (configuration != null) {
             for (AuditLogger logger : configuration.getLoggers()) {
                 logger.log(uri + extra + " by " + username + " from " + remoteIP);
