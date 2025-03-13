@@ -122,7 +122,8 @@ public class AuditTrailFilter implements Filter {
     }
 
     private boolean isShouldDisplayUserName() {
-        return getConfiguration() != null && getConfiguration().shouldDisplayUserName();
+        var configuration = getConfiguration();
+        return configuration != null && configuration.shouldDisplayUserName();
     }
 
     @CheckForNull
