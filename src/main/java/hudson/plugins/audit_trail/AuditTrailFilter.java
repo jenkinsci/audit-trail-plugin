@@ -69,8 +69,7 @@ public class AuditTrailFilter implements Filter {
      * @deprecated as of 2.6
      **/
     @Deprecated
-    public AuditTrailFilter(AuditTrailPlugin plugin) {
-    }
+    public AuditTrailFilter(AuditTrailPlugin plugin) {}
 
     public AuditTrailFilter() {
         // used by the injector
@@ -111,10 +110,7 @@ public class AuditTrailFilter implements Filter {
                 extra = formatExtraInfoString(request.getParameter("name"));
             }
 
-
-            String username = user != null
-                    ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId())
-                    : "NA";
+            String username = user != null ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId()) : "NA";
             if (LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(
                         Level.FINE, "Audit request {0} by user {1} from {2}", new Object[] {uri, username, remoteIP});
