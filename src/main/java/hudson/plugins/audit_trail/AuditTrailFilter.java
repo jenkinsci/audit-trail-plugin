@@ -26,7 +26,9 @@ package hudson.plugins.audit_trail;
 import static hudson.init.InitMilestone.EXTENSIONS_AUGMENTED;
 
 import com.google.inject.Injector;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.init.Initializer;
 import hudson.model.User;
 import hudson.util.PluginServletFilter;
@@ -40,8 +42,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.inject.Inject;
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import jenkins.model.Jenkins;
 
@@ -57,9 +63,6 @@ public class AuditTrailFilter implements Filter {
 
     private static Pattern uriPattern = null;
 
-    @Inject
-    private AuditTrailPlugin configuration;
-
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     /**
@@ -67,7 +70,6 @@ public class AuditTrailFilter implements Filter {
      **/
     @Deprecated
     public AuditTrailFilter(AuditTrailPlugin plugin) {
-        this.configuration = plugin;
     }
 
     public AuditTrailFilter() {
@@ -92,9 +94,6 @@ public class AuditTrailFilter implements Filter {
     private void logRequest(HttpServletRequest request, User user) {
         String uri = getPathInfo(request);
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
-            String username = user != null
-                    ? (configuration.shouldDisplayUserName() ? user.getDisplayName() : user.getId())
-                    : "NA";
             String remoteIP = request.getRemoteAddr();
             String extra = "";
             // For queue items, show what task is in the queue:
@@ -112,6 +111,10 @@ public class AuditTrailFilter implements Filter {
                 extra = formatExtraInfoString(request.getParameter("name"));
             }
 
+
+            String username = user != null
+                    ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId())
+                    : "NA";
             if (LOGGER.isLoggable(Level.FINE))
                 LOGGER.log(
                         Level.FINE, "Audit request {0} by user {1} from {2}", new Object[] {uri, username, remoteIP});
@@ -119,6 +122,19 @@ public class AuditTrailFilter implements Filter {
             onRequest(uri, extra, username, remoteIP);
         } else {
             LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
+        }
+    }
+
+    private boolean isShouldDisplayUserName() {
+        return getConfiguration() != null && getConfiguration().shouldDisplayUserName();
+    }
+
+    @CheckForNull
+    private AuditTrailPlugin getConfiguration() {
+        if (Jenkins.get().getInitLevel().compareTo(EXTENSIONS_AUGMENTED) >= 0) {
+            return ExtensionList.lookupSingleton(AuditTrailPlugin.class);
+        } else {
+            return null;
         }
     }
 
@@ -154,6 +170,7 @@ public class AuditTrailFilter implements Filter {
     }
 
     private void onRequest(String uri, String extra, String username, String remoteIP) {
+        AuditTrailPlugin configuration = getConfiguration();
         if (configuration != null) {
             for (AuditLogger logger : configuration.getLoggers()) {
                 logger.log(uri + extra + " by " + username + " from " + remoteIP);
