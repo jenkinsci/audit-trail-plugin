@@ -2,7 +2,6 @@ package hudson.plugins.audit_trail;
 
 import static org.apache.commons.io.comparator.LastModifiedFileComparator.LASTMODIFIED_REVERSE;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import java.io.File;
@@ -53,9 +52,6 @@ public class LogFileDailyRotationAuditLogger extends AbstractLogFileAuditLogger 
         initializeDailyRotation();
     }
 
-    @SuppressFBWarnings(
-            value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
-            justification = "value can be null if no config file exists")
     Object readResolve() {
         this.basePattern = Paths.get(getLog());
         super.readResolve();
