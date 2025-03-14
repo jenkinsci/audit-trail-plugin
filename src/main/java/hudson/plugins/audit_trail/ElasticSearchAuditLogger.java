@@ -41,7 +41,6 @@ import hudson.util.Secret;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -60,18 +59,20 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang.time.FastDateFormat;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.ssl.TrustStrategy;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -335,10 +336,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
 
         private CloseableHttpClient createHttpClient(
                 KeyStore keyStore, String keyStorePassword, boolean skipCertificateValidation)
-                throws IOException, GeneralSecurityException {
+                throws GeneralSecurityException {
             TrustStrategy trustStrategy = null;
             if (skipCertificateValidation) {
-                trustStrategy = new TrustSelfSignedStrategy();
+                trustStrategy = TrustSelfSignedStrategy.INSTANCE;
             }
             SSLContextBuilder contextBuilder = SSLContexts.custom();
             contextBuilder.loadTrustMaterial(keyStore, trustStrategy);
@@ -347,23 +348,31 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             }
             SSLContext sslContext = contextBuilder.build();
             HttpClientBuilder builder = HttpClients.custom();
-            builder.setSslcontext(sslContext);
+
+            SSLConnectionSocketFactoryBuilder sslConnectionBuilder =
+                    SSLConnectionSocketFactoryBuilder.create().setSslContext(sslContext);
             if (skipCertificateValidation) {
-                builder.setSSLHostnameVerifier(new NoopHostnameVerifier());
+                sslConnectionBuilder.setHostnameVerifier(NoopHostnameVerifier.INSTANCE);
             }
+
+            builder.setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                    .setSSLSocketFactory(sslConnectionBuilder.build())
+                    .build());
+
             return builder.build();
         }
 
         public void sendMessage(String event) throws IOException {
             HttpPost post = getHttpPost(event);
-            try (CloseableHttpResponse response = httpClient.execute(post)) {
-                int statusCode = response.getStatusLine().getStatusCode();
+            httpClient.execute(post, response -> {
+                int statusCode = response.getCode();
                 if (statusCode >= 200 && statusCode < 300) {
-                    LOGGER.log(Level.FINE, "Response: {0}", response.toString());
+                    LOGGER.log(Level.FINE, "Response: {0}", response);
                 } else {
-                    throw new IOException(this.getErrorMessage(response));
+                    throw new IOException(getErrorMessage(response));
                 }
-            }
+                return response;
+            });
         }
 
         HttpPost getHttpPost(String data) {
@@ -373,8 +382,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             payload.put("message", data);
             payload.put(
                     "@timestamp", DATE_FORMATTER.format(Calendar.getInstance().getTime()));
-            StringEntity input = new StringEntity(payload.toString(), StandardCharsets.UTF_8);
-            input.setContentType(ContentType.APPLICATION_JSON.toString());
+            StringEntity input = new StringEntity(
+                    payload.toString(), ContentType.APPLICATION_JSON, StandardCharsets.UTF_8.name(), false);
             postRequest.setEntity(input);
             if (auth != null) {
                 postRequest.addHeader("Authorization", "Basic " + auth);
@@ -382,30 +391,21 @@ public class ElasticSearchAuditLogger extends AuditLogger {
             return postRequest;
         }
 
-        private String getErrorMessage(CloseableHttpResponse response) {
-            ByteArrayOutputStream byteStream = null;
-            PrintStream stream = null;
-            try {
-                byteStream = new ByteArrayOutputStream();
-                stream = new PrintStream(byteStream, true, StandardCharsets.UTF_8.name());
+        private String getErrorMessage(ClassicHttpResponse response) {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            try (PrintStream stream = new PrintStream(byteStream, true, StandardCharsets.UTF_8)) {
                 try {
                     stream.print("HTTP error code: ");
-                    stream.println(response.getStatusLine().getStatusCode());
+                    stream.println(response.getCode());
                     stream.print("URL: ");
-                    stream.println(url.toString());
-                    stream.println("RESPONSE: " + response.toString());
+                    stream.println(url);
+                    stream.println("RESPONSE: " + response);
                     response.getEntity().writeTo(stream);
                 } catch (IOException e) {
                     stream.println(ExceptionUtils.getStackTrace(e));
                 }
                 stream.flush();
-                return byteStream.toString(StandardCharsets.UTF_8.name());
-            } catch (UnsupportedEncodingException e) {
-                return ExceptionUtils.getStackTrace(e);
-            } finally {
-                if (stream != null) {
-                    stream.close();
-                }
+                return byteStream.toString(StandardCharsets.UTF_8);
             }
         }
     }
