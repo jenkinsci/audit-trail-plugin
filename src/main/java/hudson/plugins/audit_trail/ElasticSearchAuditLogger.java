@@ -369,7 +369,10 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 if (statusCode >= 200 && statusCode < 300) {
                     LOGGER.log(Level.FINE, "Response: {0}", response);
                 } else {
-                    throw new IOException(getErrorMessage(response));
+                    LOGGER.log(
+                            Level.WARNING,
+                            "Audit event not sent to Elastic Search server: " + event + " - " + this,
+                            getErrorMessage(response));
                 }
                 return response;
             });
