@@ -16,12 +16,12 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private static final String LOG_FILE_SIZE_INPUT_NAME = "_.limit";
     private static final String LOG_FILE_COUNT_INPUT_NAME = "_.count";
     private static final String LOG_FILE_LOG_SEPARATOR_INPUT_NAME = "_.logSeparator";
-    private static final String PATTERN_INPUT_NAME = "pattern";
-    private static final String LOG_BUILD_CAUSE_INPUT_NAME = "logBuildCause";
-    private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME = "logCredentialsUsage";
+    private static final String PATTERN_INPUT_NAME = "_.pattern";
+    private static final String LOG_BUILD_CAUSE_INPUT_NAME = "_.logBuildCause";
+    private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME = "_.logCredentialsUsage";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
-    private static final String DISPLAY_USER_NAME_INPUT_NAME = "displayUserName";
+    private static final String DISPLAY_USER_NAME_INPUT_NAME = "_.displayUserName";
 
     private final File logFile;
 
@@ -58,7 +58,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         j.getButtonByCaption(form, ADD_LOGGER_BUTTON_TEXT).click();
-        configure.getAnchorByText(LOG_FILE_COMBO_TEXT).click();
+        j.getButtonByCaption(form, LOG_FILE_COMBO_TEXT).click();
         wc.waitForBackgroundJavaScript(TIMEOUT);
         form.getInputByName(LOG_LOCATION_INPUT_NAME).setValue(logFile.getPath());
         form.getInputByName(LOG_FILE_SIZE_INPUT_NAME).setValue("1");

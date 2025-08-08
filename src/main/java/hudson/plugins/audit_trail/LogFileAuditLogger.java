@@ -1,6 +1,5 @@
 package hudson.plugins.audit_trail;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import java.io.IOException;
@@ -22,9 +21,6 @@ public class LogFileAuditLogger extends AbstractLogFileAuditLogger {
         configure();
     }
 
-    @SuppressFBWarnings(
-            value = "RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE",
-            justification = "value can be null if no config file exists")
     Object readResolve() {
         super.readResolve();
         configure();
