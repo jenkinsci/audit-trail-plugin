@@ -1,5 +1,6 @@
 package hudson.plugins.audit_trail;
 
+import com.google.common.base.Strings;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
@@ -14,12 +15,14 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
-import org.jenkinsci.plugins.workflow.actions.ArgumentsAction;
 import org.jenkinsci.plugins.workflow.cps.nodes.StepStartNode;
 import org.jenkinsci.plugins.workflow.graph.FlowGraphWalker;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
+import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -61,7 +64,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
             for (AuditLogger logger : configuration.getLoggers()) {
                 String message = run.getFullDisplayName() + " "
-                        + builder.toString() + " on node "
+                        + builder + " on "
                         + buildNodeName(run) + " started at "
                         + run.getTimestampString2() + " completed in "
                         + run.getDuration() + "ms" + " completed: "
@@ -108,7 +111,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
             return printNodes((WorkflowRun) run);
         } else {
             LOGGER.log(
-                    Level.INFO,
+                    Level.FINE,
                     "Run is not an AbstractBuild but a {0}, will log the build node as {1}.",
                     new Object[] {run.getClass().getName(), UNKNOWN_NODE});
         }
@@ -118,17 +121,35 @@ public class AuditTrailRunListener extends RunListener<Run> {
     public String printNodes(WorkflowRun run) {
         var exec = run.getExecution();
         if (exec == null) {
-            return "";
+            return "N/A";
         }
         var nodes = StreamSupport.stream(new FlowGraphWalker(exec).spliterator(), false)
-                .filter(n -> n instanceof StepStartNode && n.getDisplayName().contains("node"))
-                .map(ArgumentsAction::getStepArgumentsAsString)
+                .filter(n -> n instanceof StepStartNode)
+                .flatMap(n -> extractNodeNames((StepStartNode) n))
                 .filter(Objects::nonNull)
+                .distinct()
                 .collect(Collectors.joining(";"));
         if (nodes.isEmpty()) {
             // it means we didn't find any start node, meaning agent none
             return "no agent";
         }
         return nodes;
+    }
+
+    private static Stream<String> extractNodeNames(StepStartNode node) {
+        var stepDescriptor = node.getDescriptor();
+        if (stepDescriptor instanceof ExecutorStep.DescriptorImpl) {
+            return node.getActions(WorkspaceActionImpl.class).stream()
+                    .map(WorkspaceActionImpl::getNode)
+                    .map(AuditTrailRunListener::normalizeNodeName);
+        }
+        return Stream.empty();
+    }
+
+    private static String normalizeNodeName(String nodeName) {
+        if (Strings.isNullOrEmpty(nodeName)) {
+            return hudson.model.Messages.Hudson_Computer_DisplayName();
+        }
+        return nodeName;
     }
 }
