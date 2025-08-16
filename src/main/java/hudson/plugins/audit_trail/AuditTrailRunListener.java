@@ -1,20 +1,19 @@
 package hudson.plugins.audit_trail;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
+import hudson.ExtensionList;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
-import hudson.model.Node;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
+import jenkins.model.Jenkins;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -25,7 +24,6 @@ public class AuditTrailRunListener extends RunListener<Run> {
     private static final Logger LOGGER = Logger.getLogger(AuditTrailRunListener.class.getName());
 
     private static final String MASKED = "****";
-    static final String UNKNOWN_NODE = "#unknown#";
 
     @Inject
     AuditTrailPlugin configuration;
@@ -56,7 +54,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
             for (AuditLogger logger : configuration.getLoggers()) {
                 String message = run.getFullDisplayName() + " "
-                        + builder.toString() + " on node "
+                        + builder + " on "
                         + buildNodeName(run) + " started at "
                         + run.getTimestampString2() + " completed in "
                         + run.getDuration() + "ms" + " completed: "
@@ -92,19 +90,14 @@ public class AuditTrailRunListener extends RunListener<Run> {
     }
 
     String buildNodeName(Run<?, ?> run) {
-        if (run instanceof AbstractBuild) {
-            var abstractBuild = (AbstractBuild<?, ?>) run;
-            Node node = abstractBuild.getBuiltOn();
-            if (node != null) {
-                return node.getDisplayName();
-            }
-            return abstractBuild.getBuiltOnStr() != null ? abstractBuild.getBuiltOnStr() : "built-in";
-        } else {
-            LOGGER.log(
-                    Level.INFO,
-                    "Run is not an AbstractBuild but a {0}, will log the build node as {1}.",
-                    new Object[] {run.getClass().getName(), UNKNOWN_NODE});
+        return getNodeNameRetriever().buildNodeName(run);
+    }
+
+    private BasicNodeNameRetriever getNodeNameRetriever() {
+        var workflowNodeNameRetrieverList = Jenkins.get().getExtensionList(WorkflowNodeNameRetriever.class);
+        if (workflowNodeNameRetrieverList.isEmpty()) {
+            return ExtensionList.lookupSingleton(BasicNodeNameRetriever.class);
         }
-        return UNKNOWN_NODE;
+        return workflowNodeNameRetrieverList.get(0);
     }
 }

@@ -1,6 +1,8 @@
 package hudson.plugins.audit_trail;
 
-import static hudson.plugins.audit_trail.AuditTrailRunListener.UNKNOWN_NODE;
+import static hudson.plugins.audit_trail.BasicNodeNameRetriever.UNKNOWN_NODE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -14,9 +16,12 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.PasswordParameterDefinition;
 import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
+import hudson.model.labels.LabelAtom;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -135,5 +140,93 @@ public class AuditTrailRunListenerTest {
         var abstractBuildWithANonExistingNode = Mockito.mock(AbstractBuild.class);
         Mockito.when(abstractBuildWithANonExistingNode.getBuiltOnStr()).thenReturn("world");
         assertEquals("world", listener.buildNodeName(abstractBuildWithANonExistingNode));
+    }
+
+    @Issue("JENKINS-71637")
+    @Test
+    public void shouldWorkflowRunAgentName() throws Exception {
+        var logFileName = "shouldLogWorkflowRunAgentName.log";
+        var logFile = new File(tmpDir.getRoot(), logFileName);
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile)
+                .withLogBuildCause(true)
+                .sendConfiguration(j, wc);
+
+        j.createOnlineSlave(new LabelAtom("node-1"));
+
+        var workflowJob = j.createProject(WorkflowJob.class, "job-1");
+        workflowJob.setDefinition(new CpsFlowDefinition(
+                """
+                        pipeline {
+                          agent {
+                            label 'node-1'
+                          }
+                          stages {
+                            stage('single agent') {
+                              steps {
+                                echo 'hello'
+                              }
+                            }
+                          }
+                        }
+                        """,
+                true));
+        workflowJob.save();
+        var run = workflowJob.scheduleBuild2(0).get();
+
+        System.out.println(run.getLog());
+
+        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+
+        // the API creates agents with name slaveN
+        assertThat(log, containsString("slave0"));
+    }
+
+    @Issue("JENKINS-71637")
+    @Test
+    public void shouldLogPerStageWorkflowRunAgentName() throws Exception {
+        var logFileName = "shouldLogPerStageWorkflowRunAgentName.log";
+        var logFile = new File(tmpDir.getRoot(), logFileName);
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile)
+                .withLogBuildCause(true)
+                .sendConfiguration(j, wc);
+
+        j.createOnlineSlave(new LabelAtom("node-1"));
+
+        var workflowJob = j.createProject(WorkflowJob.class, "job-1");
+        workflowJob.setDefinition(new CpsFlowDefinition(
+                """
+                        pipeline {
+                          agent none
+                          stages {
+                            stage('first-agent') {
+                              agent {
+                                label 'built-in'
+                              }
+                              steps {
+                                echo 'hello'
+                              }
+                            }
+                            stage('second-agent') {
+                              agent {
+                                label 'node-1'
+                              }
+                              steps {
+                                echo 'hello'
+                              }
+                            }
+                          }
+                        }
+                        """,
+                true));
+        workflowJob.save();
+        workflowJob.scheduleBuild2(0).get();
+
+        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+
+        assertThat(log, containsString("Built-In Node"));
+        // the API creates agents with name slaveN
+        assertThat(log, containsString("slave0"));
     }
 }
