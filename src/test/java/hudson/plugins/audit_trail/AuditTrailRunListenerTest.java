@@ -221,9 +221,7 @@ public class AuditTrailRunListenerTest {
                         """,
                 true));
         workflowJob.save();
-        var run = workflowJob.scheduleBuild2(0).get();
-
-        System.out.println(run.getLog());
+        workflowJob.scheduleBuild2(0).get();
 
         var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
 

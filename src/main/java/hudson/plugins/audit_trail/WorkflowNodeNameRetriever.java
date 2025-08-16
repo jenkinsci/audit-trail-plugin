@@ -14,6 +14,10 @@ import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.jenkinsci.plugins.workflow.support.actions.WorkspaceActionImpl;
 import org.jenkinsci.plugins.workflow.support.steps.ExecutorStep;
 
+/**
+ * Created by Pierre Beitz
+ * on 16/08/2025.
+ */
 @Extension(optional = true)
 public class WorkflowNodeNameRetriever extends BasicNodeNameRetriever {
     private static final String N_A = "N/A";

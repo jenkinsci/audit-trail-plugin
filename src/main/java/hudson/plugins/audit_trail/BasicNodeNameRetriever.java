@@ -7,6 +7,10 @@ import hudson.model.Run;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Created by Pierre Beitz
+ * on 16/08/2025.
+ */
 @Extension
 public class BasicNodeNameRetriever {
     private static final Logger LOGGER = Logger.getLogger(BasicNodeNameRetriever.class.getName());
