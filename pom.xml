@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.80</version>
+    <version>5.22</version>
     <relativePath />
   </parent>
 
@@ -42,8 +42,10 @@
   </scm>
   <properties>
     <changelist>999999-SNAPSHOT</changelist>
-    <gitHubRepo>jenkinsci/audit-trail-plugin</gitHubRepo>
-    <jenkins.version>2.414.3</jenkins.version>
+    <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
+    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+    <jenkins.baseline>2.492</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
 
@@ -51,8 +53,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.414.x</artifactId>
-        <version>2961.v1f472390972e</version>
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
+        <version>5208.vb_69e9d049f68</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -61,13 +63,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.cloudbees</groupId>
+      <groupId>io.jenkins.lib</groupId>
       <artifactId>syslog-java-client</artifactId>
-      <version>1.1.7</version>
+      <version>1.1.8</version>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>apache-httpcomponents-client-4-api</artifactId>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>apache-httpcomponents-client-5-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>

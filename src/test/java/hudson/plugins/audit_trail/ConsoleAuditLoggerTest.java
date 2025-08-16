@@ -56,7 +56,7 @@ class ConsoleAuditLoggerTest {
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         j.getButtonByCaption(form, "Add Logger").click();
-        configure.getAnchorByText("Console").click();
+        j.getButtonByCaption(form, "Console").click();
         wc.waitForBackgroundJavaScript(2000);
 
         // When
