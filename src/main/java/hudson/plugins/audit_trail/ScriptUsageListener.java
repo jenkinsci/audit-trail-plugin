@@ -2,13 +2,12 @@ package hudson.plugins.audit_trail;
 
 import hudson.Extension;
 import hudson.model.User;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.inject.Inject;
 import jenkins.model.Jenkins;
 import jenkins.model.ScriptListener;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.inject.Inject;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Log when a (privileged) Groovy script is executed.
@@ -35,7 +34,6 @@ public class ScriptUsageListener implements ScriptListener {
      * @param origin Descriptive identifier of the origin where the script is executed (Controller, Agent ID, Run ID).
      * @param u If available, the user that executed the script. Can be null.
      */
-
     @Override
     public void onScript(String script, String origin, User u) {
         if (!configuration.getLogScriptUsage()) {
@@ -53,7 +51,7 @@ public class ScriptUsageListener implements ScriptListener {
         builder.append(script);
         String log = builder.toString();
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "Detected groovy script usage, details: {0}", new Object[]{log});
+            LOGGER.log(Level.FINE, "Detected groovy script usage, details: {0}", new Object[] {log});
         }
         for (AuditLogger logger : configuration.getLoggers()) {
             logger.log(log);

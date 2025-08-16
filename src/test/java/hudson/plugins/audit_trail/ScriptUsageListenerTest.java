@@ -1,14 +1,12 @@
 package hudson.plugins.audit_trail;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import hudson.Util;
 import hudson.cli.GroovyCommand;
 import hudson.cli.GroovyshCommand;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.kohsuke.stapler.StaplerRequest;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -16,20 +14,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Pattern;
-
-import org.kohsuke.stapler.StaplerResponse;
-
 import javax.servlet.RequestDispatcher;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 public class ScriptUsageListenerTest {
     @Rule
     public JenkinsRule r = new JenkinsRule();
+
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
+
     private final String script = "println('light of the world')";
 
     @Test
@@ -49,9 +48,14 @@ public class ScriptUsageListenerTest {
         r.jenkins.doScriptText(req, rsp);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(
-                ".*A groovy script was executed by user 'SYSTEM'\\. Origin: Script Console Controller\\..*The " +
-                        "executed script:.*" + Pattern.quote(script) + ".*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(
+                                ".*A groovy script was executed by user 'SYSTEM'\\. Origin: Script Console Controller\\..*The "
+                                        + "executed script:.*" + Pattern.quote(script) + ".*",
+                                Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
 
     @Test
@@ -67,9 +71,14 @@ public class ScriptUsageListenerTest {
         cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(
-                ".*A groovy script was executed\\. Origin: CLI/GroovyCommand.*The executed script:.*"
-                        + Pattern.quote(script) + ".*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(
+                                ".*A groovy script was executed\\. Origin: CLI/GroovyCommand.*The executed script:.*"
+                                        + Pattern.quote(script) + ".*",
+                                Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
 
     @Test
@@ -84,16 +93,24 @@ public class ScriptUsageListenerTest {
         cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(
-                ".*A groovy script was executed\\. Origin: CLI/GroovySh.*The executed script:.*"
-                        + Pattern.quote(script) + ".*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(
+                                ".*A groovy script was executed\\. Origin: CLI/GroovySh.*The executed script:.*"
+                                        + Pattern.quote(script) + ".*",
+                                Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
+
     @Test
     public void disabledLoggingOptionIsRespected() throws Exception {
         String logFileName = "disabledCredentialUsageIsRespected.log";
         File logFile = new File(tmpDir.getRoot(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
-        new SimpleAuditTrailPluginConfiguratorHelper(logFile).withLogScriptUsage(false).sendConfiguration(r, wc);
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile)
+                .withLogScriptUsage(false)
+                .sendConfiguration(r, wc);
 
         GroovyCommand cmd = new GroovyCommand();
         cmd.script = "=";

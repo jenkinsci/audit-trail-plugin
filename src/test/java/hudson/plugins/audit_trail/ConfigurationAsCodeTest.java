@@ -1,5 +1,9 @@
 package hudson.plugins.audit_trail;
 
+import static io.jenkins.plugins.casc.misc.Util.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.*;
+
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
@@ -9,10 +13,6 @@ import io.jenkins.plugins.casc.model.CNode;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.jvnet.hudson.test.Issue;
-
-import static io.jenkins.plugins.casc.misc.Util.*;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
 
 /**
  * Created by Pierre Beitz
@@ -35,7 +35,7 @@ public class ConfigurationAsCodeTest {
         assertTrue(plugin.getLogBuildCause());
         assertTrue(plugin.shouldLogCredentialsUsage());
         assertTrue(plugin.shouldLogBuildCause());
-    assertEquals(3, plugin.getLoggers().size());
+        assertEquals(3, plugin.getLoggers().size());
 
         // first logger
         AuditLogger logger = plugin.getLoggers().get(0);

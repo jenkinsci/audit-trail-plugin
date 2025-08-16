@@ -133,7 +133,10 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     public List<AuditLogger> getLoggers() {
         return loggers;
     }
-    public boolean getLogScriptUsage() { return logScriptUsage; }
+
+    public boolean getLogScriptUsage() {
+        return logScriptUsage;
+    }
 
     public AuditTrailPlugin() {
         load();
@@ -192,6 +195,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         this.logScriptUsage = logScriptUsage;
         save();
     }
+
     private void updateFilterPattern() {
         try {
             AuditTrailFilter.setPattern(pattern);
