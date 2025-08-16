@@ -1,16 +1,14 @@
 package hudson.plugins.audit_trail;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import jenkins.model.GlobalConfiguration;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-
-import jenkins.model.GlobalConfiguration;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author <a href="mailto:alexander.russell@sap.com">Alex Russell</a>
@@ -18,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class ElasticSearchAuditLoggerTest {
 
     private static String esUrl = "https://localhost/myindex/jenkins";
+
     @Rule
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
@@ -27,7 +26,7 @@ public class ElasticSearchAuditLoggerTest {
         HtmlPage configure = jenkinsWebClient.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         jenkinsRule.getButtonByCaption(form, "Add Logger").click();
-        configure.getAnchorByText("Elastic Search server").click();
+        jenkinsRule.getButtonByCaption(form, "Elastic Search server").click();
         jenkinsWebClient.waitForBackgroundJavaScript(2000);
 
         // When

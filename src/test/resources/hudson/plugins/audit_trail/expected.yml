@@ -1,3 +1,4 @@
+displayUserName: false
 logBuildCause: true
 logCredentialsUsage: true
 logScriptUsage: true

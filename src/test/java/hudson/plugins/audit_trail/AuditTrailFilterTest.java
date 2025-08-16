@@ -1,25 +1,24 @@
 package hudson.plugins.audit_trail;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import static org.junit.Assert.assertTrue;
+
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
+import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
+import org.htmlunit.FailingHttpStatusCodeException;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.WebRequest;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Pattern;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Pierre Beitz
@@ -27,8 +26,10 @@ import static org.junit.Assert.assertTrue;
  */
 public class AuditTrailFilterTest {
     public static final int LONG_DELAY = 50000;
+
     @Rule
     public JenkinsRule j = new JenkinsRule();
+
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -40,7 +41,8 @@ public class AuditTrailFilterTest {
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.scheduleBuild2(LONG_DELAY, new Cause.UserIdCause());
-        WebRequest request = new WebRequest(new URL(wc.createCrumbedUrl("queue/cancelItem") + "&id=1"), HttpMethod.POST);
+        WebRequest request =
+                new WebRequest(new URL(wc.createCrumbedUrl("queue/cancelItem") + "&id=1"), HttpMethod.POST);
 
         try {
             wc.getPage(request);
@@ -50,7 +52,11 @@ public class AuditTrailFilterTest {
         }
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
 
     @Issue("JENKINS-15731")
@@ -63,7 +69,7 @@ public class AuditTrailFilterTest {
         String jobName = "Job With Space";
         HtmlPage configure = wc.goTo("view/all/newJob");
         HtmlForm form = configure.getFormByName("createItem");
-        form.getInputByName("name").setValueAttribute(jobName);
+        form.getInputByName("name").setValue(jobName);
         form.getInputByName("name").blur();
         // not clear to me why the input is not visible in the test (yet it exists in the page)
         // for some reason the two next calls are needed
@@ -73,6 +79,10 @@ public class AuditTrailFilterTest {
         j.submit(form);
 
         String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
 }

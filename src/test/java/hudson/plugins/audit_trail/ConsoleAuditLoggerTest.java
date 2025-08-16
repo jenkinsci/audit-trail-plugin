@@ -23,24 +23,22 @@
  */
 package hudson.plugins.audit_trail;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import hudson.Util;
-import jenkins.model.GlobalConfiguration;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 import static hudson.plugins.audit_trail.AuditTrailTest.load;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+import hudson.Util;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import jenkins.model.GlobalConfiguration;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * @author <a href="mailto:tomasz.sek.88@gmail.com">Tomasz Sęk</a>
@@ -59,7 +57,7 @@ public class ConsoleAuditLoggerTest {
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
         j.getButtonByCaption(form, "Add Logger").click();
-        configure.getAnchorByText("Console").click();
+        j.getButtonByCaption(form, "Console").click();
         wc.waitForBackgroundJavaScript(2000);
 
         // When

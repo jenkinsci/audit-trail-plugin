@@ -8,15 +8,17 @@
             addCaption="${%Add Logger}"/>
     </f:entry>
     <f:advanced>
-      <f:entry title="${%URL Patterns to Log}">
-        <f:textbox name="pattern" value="${descriptor.pattern}"
-         checkUrl="'descriptorByName/AuditTrailPlugin/regexCheck?value='+encode(this.value)"/>
+      <f:entry field="pattern" title="${%URL Patterns to Log}">
+        <f:textbox value="${descriptor.pattern}"/>
       </f:entry>
-      <f:entry title="${%Log how each build is triggered}">
-        <f:checkbox name="logBuildCause" checked="${descriptor.logBuildCause}"/>
+      <f:entry field="logBuildCause" title="${%Log how each build is triggered}">
+        <f:checkbox checked="${descriptor.logBuildCause}"/>
       </f:entry>
-      <f:entry title="${%Log credentials usage}">
-        <f:checkbox name="logCredentialsUsage" checked="${descriptor.logCredentialsUsage}"/>
+      <f:entry field="logCredentialsUsage" title="${%Log credentials usage}">
+        <f:checkbox checked="${descriptor.logCredentialsUsage}"/>
+      </f:entry>
+      <f:entry field="displayUserName" title="${%Display Username instead of UserID}">
+        <f:checkbox checked="${descriptor.displayUserName}"/>
       </f:entry>
       <f:entry title="${%Log Groovy scripts}">
         <f:checkbox name="logScriptUsage" checked="${descriptor.logScriptUsage}"/>

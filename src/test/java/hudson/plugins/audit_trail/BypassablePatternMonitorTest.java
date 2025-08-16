@@ -1,15 +1,15 @@
 package hudson.plugins.audit_trail;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.Issue;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by Pierre Beitz
@@ -19,6 +19,7 @@ public class BypassablePatternMonitorTest {
 
     @Mock
     private AuditTrailPlugin plugin;
+
     @InjectMocks
     private BypassablePatternMonitor monitor;
 

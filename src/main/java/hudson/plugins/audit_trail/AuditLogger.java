@@ -6,7 +6,6 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
-
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
  * @author Pierre Beitz
@@ -16,7 +15,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
     public abstract void log(String event);
 
     public Descriptor<AuditLogger> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorOrDie(getClass());
+        return Jenkins.get().getDescriptorOrDie(getClass());
     }
 
     /**
@@ -24,7 +23,7 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
      * For instance if your logger use a InputStream, this is were you should close it.
      *
      * @exception  SecurityException  if a security manager exists and if
-     *             the caller does not have <tt>LoggingPermission("control")</tt>.
+     *             the caller does not have <code>LoggingPermission("control")</code>.
      */
     public void cleanUp() throws SecurityException {
         // default does nothing
@@ -34,6 +33,6 @@ public abstract class AuditLogger implements Describable<AuditLogger>, Extension
      * Returns all the registered {@link AuditLogger} descriptors.
      */
     public static DescriptorExtensionList<AuditLogger, Descriptor<AuditLogger>> all() {
-        return Jenkins.getInstance().getDescriptorList(AuditLogger.class);
+        return Jenkins.get().getDescriptorList(AuditLogger.class);
     }
 }

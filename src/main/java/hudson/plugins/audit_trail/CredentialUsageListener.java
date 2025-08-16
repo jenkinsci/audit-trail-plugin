@@ -9,10 +9,9 @@ import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.Node;
 import hudson.model.Run;
-
-import javax.inject.Inject;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.inject.Inject;
 
 /**
  * Log when credentials are used. Only works if the job decides to access the credentials via the
@@ -38,8 +37,7 @@ public class CredentialUsageListener implements CredentialsUseListener {
      */
     @Override
     public void onUse(Credentials c, Run run) {
-        if (!configuration.shouldLogCredentialsUsage())
-            return;
+        if (!configuration.shouldLogCredentialsUsage()) return;
 
         StringBuilder builder = new StringBuilder(100);
 
@@ -59,8 +57,7 @@ public class CredentialUsageListener implements CredentialsUseListener {
      */
     @Override
     public void onUse(Credentials c, Node node) {
-        if (!configuration.shouldLogCredentialsUsage())
-            return;
+        if (!configuration.shouldLogCredentialsUsage()) return;
 
         StringBuilder builder = new StringBuilder(100);
 
@@ -80,8 +77,7 @@ public class CredentialUsageListener implements CredentialsUseListener {
      */
     @Override
     public void onUse(Credentials c, Item item) {
-        if (!configuration.shouldLogCredentialsUsage())
-            return;
+        if (!configuration.shouldLogCredentialsUsage()) return;
 
         StringBuilder builder = new StringBuilder(100);
 
@@ -100,17 +96,18 @@ public class CredentialUsageListener implements CredentialsUseListener {
             String credsId = ((IdCredentials) c).getId();
             builder.append(String.format("used credentials '%s' (%s).", credsId, credsType));
         } else {
-            String noIdAvailableWarning = builder + ("used an unsupported credentials type (" + credsType +
-                    ") whose ID cannot be audit-logged. Consider opening an issue.");
+            String noIdAvailableWarning = builder
+                    + ("used an unsupported credentials type (" + credsType
+                            + ") whose ID cannot be audit-logged. Consider opening an issue.");
             Logger.getLogger(CredentialUsageListener.class.getName()).log(Level.WARNING, null, noIdAvailableWarning);
 
-            builder.append("used credentials of type " + credsType + " (Note: Used fallback method for log as " +
-                    "credentials type is not supported. See INFO log for more information).");
+            builder.append("used credentials of type " + credsType + " (Note: Used fallback method for log as "
+                    + "credentials type is not supported. See INFO log for more information).");
         }
 
         String log = builder.toString();
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "Detected credential usage, details: {0}", new Object[]{log});
+            LOGGER.log(Level.FINE, "Detected credential usage, details: {0}", new Object[] {log});
         }
 
         for (AuditLogger logger : configuration.getLoggers()) {

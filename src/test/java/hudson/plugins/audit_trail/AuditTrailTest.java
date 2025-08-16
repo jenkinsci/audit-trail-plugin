@@ -23,35 +23,34 @@
  */
 package hudson.plugins.audit_trail;
 
-import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
-import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.JenkinsRule;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
-
-import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.WebRequest;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Test interaction of audit-trail plugin with Jenkins core.
@@ -62,6 +61,7 @@ public class AuditTrailTest {
 
     @Rule
     public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -90,8 +90,11 @@ public class AuditTrailTest {
 
         // Then
         String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), Charset.forName("UTF-8"));
-        assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
-            + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(".* job/test-job/ #1 Started by user" + " .*job/test-job/enable by .*", Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
     }
 
     @Issue("JENKINS-44129")
@@ -107,36 +110,46 @@ public class AuditTrailTest {
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         // Then
-        assertEquals("Only two files should be present, the file opened by the FileHandler and its lock",
-            2, tmpDir.getRoot().list().length);
+        assertEquals(
+                "Only two files should be present, the file opened by the FileHandler and its lock",
+                2,
+                tmpDir.getRoot().list().length);
     }
 
     @Issue("JENKINS-60421")
     @Test
     @ConfiguredWithCode("jcasc-console-and-file.yml")
-    public void shouldGenerateAuditLogsWhenSetupWithJCasc() throws IOException, ExecutionException, InterruptedException {
+    public void shouldGenerateAuditLogsWhenSetupWithJCasc()
+            throws IOException, ExecutionException, InterruptedException {
         // the injected jcasc assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
         createJobAndPush();
 
-        // https://github.com/jenkinsci/configuration-as-code-plugin/issues/899#issuecomment-524641582 log is 1, not 0 because of this.
-        // this means that we technically always open 1 file for nothing. This could be improved by delaying the opening of the file
+        // https://github.com/jenkinsci/configuration-as-code-plugin/issues/899#issuecomment-524641582 log is 1, not 0
+        // because of this.
+        // this means that we technically always open 1 file for nothing. This could be improved by delaying the opening
+        // of the file
         // after we are sure jcasc is done...
         // it's worth waiting for https://issues.jenkins-ci.org/browse/JENKINS-51856
         File logFile = new File("/tmp", "test.log.1");
         logFile.deleteOnExit();
         String log = Util.loadFile(logFile, StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, Pattern.compile(".* job/test-job/ #1 Started by user"
-              + " .*job/test-job/enable by .*", Pattern.DOTALL).matcher(log).matches());
+        assertTrue(
+                "logged actions: " + log,
+                Pattern.compile(".* job/test-job/ #1 Started by user" + " .*job/test-job/enable by .*", Pattern.DOTALL)
+                        .matcher(log)
+                        .matches());
 
-        // covering the console case will require refactoring as currently the console logger is directly using System.out/err
+        // covering the console case will require refactoring as currently the console logger is directly using
+        // System.out/err
         // we need to properly inject those...
     }
 
     @Issue("JENKINS-60421")
     @Test
-    public void loggerShouldBeProperlyConfiguredWhenLoadedFromXml() throws IOException, ExecutionException, InterruptedException {
+    public void loggerShouldBeProperlyConfiguredWhenLoadedFromXml()
+            throws IOException, ExecutionException, InterruptedException {
         // the injected xml assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
@@ -156,13 +169,13 @@ public class AuditTrailTest {
         String log = Util.loadFile(logFile, StandardCharsets.UTF_8);
         assertTrue("logged actions: " + log, log.contains(message));
 
-        // covering the console case will require refactoring as currently the console logger is directly using System.out/err
+        // covering the console case will require refactoring as currently the console logger is directly using
+        // System.out/err
         // we need to properly inject those...
     }
 
     static AuditTrailPlugin load(String fileName, Class<?> clasz) {
-        return (AuditTrailPlugin) Jenkins.XSTREAM2.fromXML(
-              clasz.getResource(fileName));
+        return (AuditTrailPlugin) Jenkins.XSTREAM2.fromXML(clasz.getResource(fileName));
     }
 
     private void createJobAndPush() throws IOException, InterruptedException, ExecutionException {

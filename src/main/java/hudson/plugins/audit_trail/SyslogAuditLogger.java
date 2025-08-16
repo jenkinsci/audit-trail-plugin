@@ -6,16 +6,15 @@ import com.cloudbees.syslog.Severity;
 import com.cloudbees.syslog.integration.jul.util.LevelHelper;
 import com.cloudbees.syslog.sender.SyslogMessageSender;
 import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
-import org.kohsuke.stapler.DataBoundConstructor;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Default values are set in <code>/src/main/resources/hudson/plugins/audit_trail/SyslogAuditLogger/config.jelly</code>
@@ -37,17 +36,21 @@ public class SyslogAuditLogger extends AuditLogger {
     private Facility facility;
     private MessageFormat messageFormat;
 
-
     @DataBoundConstructor
-    public SyslogAuditLogger(String syslogServerHostname, int syslogServerPort,
-                             String appName, String messageHostname,
-                             String facility, String messageFormat) {
+    public SyslogAuditLogger(
+            String syslogServerHostname,
+            int syslogServerPort,
+            String appName,
+            String messageHostname,
+            String facility,
+            String messageFormat) {
         this.syslogServerHostname = trimToNull(syslogServerHostname);
         this.syslogServerPort = defaultValue(syslogServerPort, DEFAULT_SYSLOG_SERVER_PORT);
         this.appName = defaultValue(trimToNull(appName), DEFAULT_APP_NAME);
         this.messageHostname = trimToNull(messageHostname);
         this.facility = defaultValue(Facility.fromLabel(trimToNull(facility)), DEFAULT_FACILITY);
-        this.messageFormat = MessageFormat.valueOf(defaultValue(trimToNull(messageFormat), DEFAULT_MESSAGE_FORMAT.toString()));
+        this.messageFormat =
+                MessageFormat.valueOf(defaultValue(trimToNull(messageFormat), DEFAULT_MESSAGE_FORMAT.toString()));
         configure();
     }
 
@@ -63,12 +66,17 @@ public class SyslogAuditLogger extends AuditLogger {
             LOGGER.log(Level.FINER, "skip log {0}, syslogMessageSender not configured", event);
             return;
         }
-        LOGGER.log(Level.FINER, "Send audit message \"{0}\" to syslog server {1}", new Object[]{event, syslogMessageSender});
+        LOGGER.log(
+                Level.FINER, "Send audit message \"{0}\" to syslog server {1}", new Object[] {event, syslogMessageSender
+                });
 
         try {
             syslogMessageSender.sendMessage(event);
         } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Exception sending audit message to syslog server " + syslogMessageSender.toString(), e);
+            LOGGER.log(
+                    Level.WARNING,
+                    "Exception sending audit message to syslog server " + syslogMessageSender.toString(),
+                    e);
             LOGGER.warning(event);
         }
     }
@@ -135,8 +143,9 @@ public class SyslogAuditLogger extends AuditLogger {
         if (messageFormat != that.messageFormat) return false;
         if (messageHostname != null ? !messageHostname.equals(that.messageHostname) : that.messageHostname != null)
             return false;
-        if (syslogServerHostname != null ? !syslogServerHostname.equals(that.syslogServerHostname) : that.syslogServerHostname != null)
-            return false;
+        if (syslogServerHostname != null
+                ? !syslogServerHostname.equals(that.syslogServerHostname)
+                : that.syslogServerHostname != null) return false;
 
         return true;
     }
@@ -154,13 +163,12 @@ public class SyslogAuditLogger extends AuditLogger {
 
     @Override
     public String toString() {
-        return "SyslogAuditLogger{" +
-                "syslogServerHostname='" + syslogServerHostname + '\'' +
-                ", syslogServerPort=" + syslogServerPort +
-                ", appName='" + appName + '\'' +
-                ", messageHostname='" + messageHostname + '\'' +
-                ", facility=" + facility +
-                '}';
+        return "SyslogAuditLogger{" + "syslogServerHostname='"
+                + syslogServerHostname + '\'' + ", syslogServerPort="
+                + syslogServerPort + ", appName='"
+                + appName + '\'' + ", messageHostname='"
+                + messageHostname + '\'' + ", facility="
+                + facility + '}';
     }
 
     protected static final Logger LOGGER = Logger.getLogger(SyslogAuditLogger.class.getName());
@@ -181,9 +189,7 @@ public class SyslogAuditLogger extends AuditLogger {
         } else {
             return value;
         }
-
     }
-
 
     @Extension
     public static class DescriptorImpl extends Descriptor<AuditLogger> {
@@ -237,5 +243,4 @@ public class SyslogAuditLogger extends AuditLogger {
             return items;
         }
     }
-
 }

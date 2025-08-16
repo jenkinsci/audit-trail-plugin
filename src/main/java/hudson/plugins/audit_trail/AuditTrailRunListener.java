@@ -1,19 +1,19 @@
 package hudson.plugins.audit_trail;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
+import hudson.ExtensionList;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
-import hudson.model.Node;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-
-import javax.inject.Inject;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
+import jenkins.model.Jenkins;
 
 /**
  * @author <a href="mailto:nicolas.deloof@gmail.com">Nicolas De Loof</a>
@@ -21,6 +21,8 @@ import java.util.stream.StreamSupport;
  */
 @Extension
 public class AuditTrailRunListener extends RunListener<Run> {
+    private static final Logger LOGGER = Logger.getLogger(AuditTrailRunListener.class.getName());
+
     private static final String MASKED = "****";
 
     @Inject
@@ -32,7 +34,7 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        if(configuration.shouldLogBuildCause()) {
+        if (configuration.shouldLogBuildCause()) {
             StringBuilder builder = new StringBuilder(100);
             dumpCauses(run, builder);
             dumpParameters(run, builder);
@@ -45,18 +47,18 @@ public class AuditTrailRunListener extends RunListener<Run> {
 
     @Override
     public void onFinalized(Run run) {
-        if(configuration.shouldLogBuildCause()) {
+        if (configuration.shouldLogBuildCause()) {
             StringBuilder builder = new StringBuilder(100);
             dumpCauses(run, builder);
             dumpParameters(run, builder);
 
             for (AuditLogger logger : configuration.getLoggers()) {
-                String message = run.getFullDisplayName() +
-                      " " + builder.toString() +
-                      " on node " + buildNodeName(run) +
-                      " started at " + run.getTimestampString2() +
-                      " completed in " + run.getDuration() + "ms" +
-                      " completed: " + run.getResult();
+                String message = run.getFullDisplayName() + " "
+                        + builder + " on "
+                        + buildNodeName(run) + " started at "
+                        + run.getTimestampString2() + " completed in "
+                        + run.getDuration() + "ms" + " completed: "
+                        + run.getResult();
                 logger.log(message);
             }
         }
@@ -66,11 +68,9 @@ public class AuditTrailRunListener extends RunListener<Run> {
         builder.append(", Parameters:[");
         ParametersAction parameters = run.getAction(ParametersAction.class);
         if (parameters != null) {
-            builder.append(
-                  StreamSupport.stream(parameters.spliterator(), false)
-                        .map(this::prettyPrintParameter)
-                        .collect(Collectors.joining(", "))
-            );
+            builder.append(StreamSupport.stream(parameters.spliterator(), false)
+                    .map(this::prettyPrintParameter)
+                    .collect(Collectors.joining(", ")));
         }
         builder.append("]");
     }
@@ -89,13 +89,15 @@ public class AuditTrailRunListener extends RunListener<Run> {
         if (buf.length() == 0) buf.append("Started");
     }
 
-    private String buildNodeName(Run run) {
-        if (run instanceof AbstractBuild) {
-            Node node = ((AbstractBuild) run).getBuiltOn();
-            if (node != null) {
-                return node.getDisplayName();
-            }
+    String buildNodeName(Run<?, ?> run) {
+        return getNodeNameRetriever().buildNodeName(run);
+    }
+
+    private BasicNodeNameRetriever getNodeNameRetriever() {
+        var workflowNodeNameRetrieverList = Jenkins.get().getExtensionList(WorkflowNodeNameRetriever.class);
+        if (workflowNodeNameRetrieverList.isEmpty()) {
+            return ExtensionList.lookupSingleton(BasicNodeNameRetriever.class);
         }
-        return "#unknown#";
+        return workflowNodeNameRetrieverList.get(0);
     }
 }
