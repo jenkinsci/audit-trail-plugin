@@ -22,7 +22,6 @@ import org.kohsuke.stapler.StaplerRequest;
  * @see Jenkins#_doScript(StaplerRequest, org.kohsuke.stapler.StaplerResponse, javax.servlet.RequestDispatcher, hudson.remoting.VirtualChannel, hudson.security.ACL)
  * @see hudson.cli.GroovyCommand#run()
  * @see hudson.cli.GroovyshCommand#run()
- * @see org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval#using(String, org.jenkinsci.plugins.scriptsecurity.scripts.Language, String)
  *
  * @author Jan Meiswinkel
  */
@@ -42,7 +41,7 @@ public class ScriptUsageListener implements ScriptListener {
     AuditTrailPlugin configuration;
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void onScriptExecution(
@@ -76,7 +75,7 @@ public class ScriptUsageListener implements ScriptListener {
         }
     }
 
-    private String prettyPrintFeature(Object feature) {
+    private static String prettyPrintFeature(Object feature) {
         if (feature instanceof Class<?>) {
             return FEATURE_MAPPING.getOrDefault(feature, feature.toString());
         }
