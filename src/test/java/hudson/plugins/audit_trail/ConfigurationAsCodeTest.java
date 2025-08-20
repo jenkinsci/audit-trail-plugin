@@ -34,6 +34,7 @@ public class ConfigurationAsCodeTest {
                 plugin.getPattern());
         assertTrue(plugin.getLogBuildCause());
         assertTrue(plugin.shouldLogCredentialsUsage());
+        assertTrue(plugin.shouldLogBuildCause());
         assertEquals(3, plugin.getLoggers().size());
 
         // first logger
