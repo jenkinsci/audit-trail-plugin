@@ -141,11 +141,15 @@ public class ElasticSearchAuditLogger extends AuditLogger {
         String password = null;
         if (!StringUtils.isBlank(usernamePasswordCredentialsId)) {
             LOGGER.fine("Username/password credentials specified: " + usernamePasswordCredentialsId);
-            StandardUsernamePasswordCredentials usernamePasswordCredentials =
-                    getUsernamePasswordCredentials(usernamePasswordCredentialsId);
-            if (usernamePasswordCredentials != null) {
-                username = usernamePasswordCredentials.getUsername();
-                password = Secret.toString(usernamePasswordCredentials.getPassword());
+            try {
+                StandardUsernamePasswordCredentials usernamePasswordCredentials =
+                        getUsernamePasswordCredentials(usernamePasswordCredentialsId);
+                if (usernamePasswordCredentials != null) {
+                    username = usernamePasswordCredentials.getUsername();
+                    password = Secret.toString(usernamePasswordCredentials.getPassword());
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Unable to resolve credentials for ElasticSearchSender", e);
             }
         }
         KeyStore clientKeyStore = null;

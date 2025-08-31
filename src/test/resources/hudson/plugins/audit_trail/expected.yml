@@ -1,6 +1,7 @@
 displayUserName: false
 logBuildCause: true
 logCredentialsUsage: true
+logScriptUsage: false
 loggers:
 - console:
     dateFormat: "yyyy-MM-dd HH:mm:ss:SSS"
