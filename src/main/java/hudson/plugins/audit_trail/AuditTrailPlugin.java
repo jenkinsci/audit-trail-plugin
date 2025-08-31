@@ -69,6 +69,8 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private boolean logBuildCause = true;
     private boolean displayUserName = false;
     private boolean logCredentialsUsage = true;
+    private boolean logScriptUsage = false;
+
     private List<AuditLogger> loggers = new ArrayList<>();
 
     private transient String log;
@@ -132,6 +134,10 @@ public class AuditTrailPlugin extends GlobalConfiguration {
         return loggers;
     }
 
+    public boolean getLogScriptUsage() {
+        return logScriptUsage;
+    }
+
     public AuditTrailPlugin() {
         load();
     }
@@ -181,6 +187,12 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     @DataBoundSetter
     public void setDisplayUserName(boolean displayUserName) {
         this.displayUserName = displayUserName;
+        save();
+    }
+
+    @DataBoundSetter
+    public void setLogScriptUsage(boolean logScriptUsage) {
+        this.logScriptUsage = logScriptUsage;
         save();
     }
 
