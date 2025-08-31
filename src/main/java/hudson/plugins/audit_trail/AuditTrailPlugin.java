@@ -69,7 +69,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private boolean logBuildCause = true;
     private boolean displayUserName = false;
     private boolean logCredentialsUsage = true;
-    private boolean logScriptUsage = true;
+    private boolean logScriptUsage = false;
 
     private List<AuditLogger> loggers = new ArrayList<>();
 
