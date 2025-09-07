@@ -1,14 +1,11 @@
 package hudson.plugins.audit_trail;
 
-import static hudson.plugins.audit_trail.AuditTrailRunListener.UNKNOWN_NODE;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static hudson.plugins.audit_trail.BasicNodeNameRetriever.UNKNOWN_NODE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -26,11 +23,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
@@ -135,7 +132,7 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-71637")
     @Test
-    void buildNodeNameIsProperlyExtractedFromTheRun() {
+    void buildNodeNameIsProperlyExtractedFromTheRun(JenkinsRule $) {
         var listener = new AuditTrailRunListener();
 
         var notAbstractBuild = Mockito.mock(Run.class);
@@ -154,9 +151,9 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-71637")
     @Test
-    public void shouldWorkflowRunAgentName() throws Exception {
+    public void shouldWorkflowRunAgentName(JenkinsRule j) throws Exception {
         var logFileName = "shouldLogWorkflowRunAgentName.log";
-        var logFile = new File(tmpDir.getRoot(), logFileName);
+        var logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogBuildCause(true)
@@ -186,7 +183,7 @@ class AuditTrailRunListenerTest {
 
         System.out.println(run.getLog());
 
-        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        var log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
 
         // the API creates agents with name slaveN
         assertThat(log, containsString("slave0"));
@@ -194,9 +191,9 @@ class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-71637")
     @Test
-    public void shouldLogPerStageWorkflowRunAgentName() throws Exception {
+    public void shouldLogPerStageWorkflowRunAgentName(JenkinsRule j) throws Exception {
         var logFileName = "shouldLogPerStageWorkflowRunAgentName.log";
-        var logFile = new File(tmpDir.getRoot(), logFileName);
+        var logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogBuildCause(true)
@@ -233,7 +230,7 @@ class AuditTrailRunListenerTest {
         workflowJob.save();
         workflowJob.scheduleBuild2(0).get();
 
-        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        var log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
 
         assertThat(log, containsString("Built-In Node"));
         // the API creates agents with name slaveN

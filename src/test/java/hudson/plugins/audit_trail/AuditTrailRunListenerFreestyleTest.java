@@ -7,11 +7,12 @@ import hudson.Util;
 import hudson.model.labels.LabelAtom;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.RealJenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.RealJenkinsExtension;
 
 /**
  * Created by Pierre Beitz
@@ -19,17 +20,17 @@ import org.jvnet.hudson.test.RealJenkinsRule;
  */
 public class AuditTrailRunListenerFreestyleTest {
 
-    @Rule
-    public RealJenkinsRule rr = new RealJenkinsRule().omitPlugins("workflow-job");
+    @RegisterExtension
+    private final RealJenkinsExtension rr = new RealJenkinsExtension().omitPlugins("workflow-job");
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir
+    Path tmpDir;
 
     @Issue("JENKINS-71637")
     @Test
     public void shouldLogPerStageWorkflowRunAgentNameWithoutPipelineInstalled() throws Throwable {
         var logFileName = "shouldLogPerStageWorkflowRunAgentName.log";
-        var rootDir = tmpDir.getRoot();
+        var rootDir = tmpDir.toFile();
         var logFile = new File(rootDir, logFileName);
         rr.startJenkins();
         rr.runRemotely(j -> {
@@ -46,6 +47,7 @@ public class AuditTrailRunListenerFreestyleTest {
             freestyle.save();
 
             freestyle.scheduleBuild2(0).get();
+            Thread.sleep(5000);
             var log = Util.loadFile(new File(rootDir, logFileName + ".0"), StandardCharsets.UTF_8);
             assertThat(log, containsString("slave0"));
         });
