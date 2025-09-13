@@ -1,6 +1,6 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -12,23 +12,23 @@ import hudson.model.Item;
 import hudson.slaves.DumbSlave;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class CredentialUsageListenerTest {
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+@WithJenkins
+class CredentialUsageListenerTest {
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir
+    Path tmpDir;
 
     @Test
-    public void jobCredentialUsageIsLogged() throws Exception {
+    void jobCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "jobCredentialUsageIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
 
@@ -38,18 +38,18 @@ public class CredentialUsageListenerTest {
                 new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, id, "description", "username", "password");
         CredentialsProvider.track(job, creds);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir.toFile(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*test-job.*used credentials '" + id + "'.*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Test
-    public void nodeCredentialUsageIsLogged() throws Exception {
+    void nodeCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "nodeCredentialUsageIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
 
@@ -60,18 +60,18 @@ public class CredentialUsageListenerTest {
                 new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, id, "description", "username", "password");
         CredentialsProvider.track(dummyAgent, creds);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir.toFile(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*test-agent.*used credentials '" + id + "'.*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Test
-    public void itemCredentialUsageIsLogged() throws Exception {
+    void itemCredentialUsageIsLogged(JenkinsRule r) throws Exception {
         String logFileName = "itemCredentialUsageIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
         // 'Folder' because it is a non-traditional item to access credentials.
@@ -81,18 +81,18 @@ public class CredentialUsageListenerTest {
         Credentials creds =
                 new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, id, "description", "username", "password");
         CredentialsProvider.track(item, creds);
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir.toFile(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*test-item.*used credentials '" + id + "'.*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Test
-    public void disabledLoggingOptionIsRespected() throws Exception {
+    void disabledLoggingOptionIsRespected(JenkinsRule r) throws Exception {
         String logFileName = "disabledCredentialUsageIsRespected.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir.toFile(), logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogCredentialsUsage(false)
@@ -104,7 +104,7 @@ public class CredentialUsageListenerTest {
                 new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, id, "description", "username", "password");
         CredentialsProvider.track(job, creds);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir.toFile(), logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(log.isEmpty());
     }
 }
