@@ -11,12 +11,9 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Item;
 import hudson.slaves.DumbSlave;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -27,11 +24,6 @@ class CredentialUsageListenerTest {
 
     @TempDir
     Path tmpDir;
-
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(tmpDir.toFile());
-    }
 
     @Test
     void jobCredentialUsageIsLogged(JenkinsRule r) throws Exception {

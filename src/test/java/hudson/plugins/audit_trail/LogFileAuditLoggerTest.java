@@ -4,10 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.EnvVars;
-import java.io.IOException;
 import java.nio.file.Path;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -19,11 +16,6 @@ class LogFileAuditLoggerTest {
 
     @TempDir
     Path folder;
-
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(folder.toFile());
-    }
 
     @Issue("JENKINS-56108")
     @Test

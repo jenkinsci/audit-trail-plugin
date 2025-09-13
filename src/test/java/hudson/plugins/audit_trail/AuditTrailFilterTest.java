@@ -6,18 +6,15 @@ import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.HttpMethod;
 import org.htmlunit.WebRequest;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -33,11 +30,6 @@ class AuditTrailFilterTest {
 
     @TempDir
     Path tmpDir;
-
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(tmpDir.toFile());
-    }
 
     @Test
     void cancelItemLogsTheQueryStringAndTheUser(JenkinsRule j) throws Exception {

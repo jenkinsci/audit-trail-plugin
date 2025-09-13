@@ -19,13 +19,10 @@ import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import hudson.model.labels.LabelAtom;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
@@ -41,11 +38,6 @@ class AuditTrailRunListenerTest {
 
     @TempDir
     Path tmpDir;
-
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(tmpDir.toFile());
-    }
 
     @Issue("JENKINS-12848")
     @Test

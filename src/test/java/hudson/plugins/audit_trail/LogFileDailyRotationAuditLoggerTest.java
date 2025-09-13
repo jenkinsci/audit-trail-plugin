@@ -15,7 +15,6 @@ import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Answers;
@@ -26,11 +25,6 @@ class LogFileDailyRotationAuditLoggerTest {
 
     @TempDir
     Path folder;
-
-    @AfterEach
-    void tearDown() throws IOException {
-        FileUtils.deleteDirectory(folder.toFile());
-    }
 
     /**
      * Ensures that if Daily Rotation is enabled a subdirectory with the corresponded logger
