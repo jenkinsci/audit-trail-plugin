@@ -24,9 +24,10 @@
 package hudson.plugins.audit_trail;
 
 import static hudson.plugins.audit_trail.AuditTrailTest.load;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import hudson.Util;
 import java.io.File;
@@ -35,23 +36,21 @@ import java.nio.charset.StandardCharsets;
 import jenkins.model.GlobalConfiguration;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author <a href="mailto:tomasz.sek.88@gmail.com">Tomasz Sęk</a>
  * @author Pierre Beitz
  */
-public class ConsoleAuditLoggerTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class ConsoleAuditLoggerTest {
 
     @Issue("JENKINS-51331")
     @Test
-    public void shouldConfigureConsoleAuditLogger() throws Exception {
+    void shouldConfigureConsoleAuditLogger(JenkinsRule j) throws Exception {
         // Given
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage configure = wc.goTo("configure");
@@ -66,22 +65,22 @@ public class ConsoleAuditLoggerTest {
         // Then
         // submit configuration page without any errors
         AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
-        assertEquals("amount of loggers", 1, plugin.getLoggers().size());
+        assertEquals(1, plugin.getLoggers().size(), "amount of loggers");
         AuditLogger logger = plugin.getLoggers().get(0);
-        assertTrue("ConsoleAuditLogger should be configured", logger instanceof ConsoleAuditLogger);
-        assertEquals("output", ConsoleAuditLogger.Output.STD_OUT, ((ConsoleAuditLogger) logger).getOutput());
+        assertInstanceOf(ConsoleAuditLogger.class, logger, "ConsoleAuditLogger should be configured");
+        assertEquals(ConsoleAuditLogger.Output.STD_OUT, ((ConsoleAuditLogger) logger).getOutput(), "output");
     }
 
     @Issue("JENKINS-12848")
     @Test
-    public void loggerShouldBeProperlyConfiguredWhenLoadedFromXml() throws IOException {
+    void loggerShouldBeProperlyConfiguredWhenLoadedFromXml() throws IOException {
         // the injected xml assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
         AuditTrailPlugin plugin = load("jenkins-12848.xml", getClass());
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
         String logSeparator = ";";
-        assertEquals("log separator", logSeparator, logger.getLogSeparator());
+        assertEquals(logSeparator, logger.getLogSeparator(), "log separator");
 
         String message = "hello";
         plugin.getLoggers().get(0).log(message);
@@ -89,6 +88,6 @@ public class ConsoleAuditLoggerTest {
         File logFile = new File("/tmp", "xml-logs-12848.0");
         logFile.deleteOnExit();
         String log = Util.loadFile(logFile, StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, log.contains(logSeparator + message));
+        assertTrue(log.contains(logSeparator + message), () -> "logged actions: " + log);
     }
 }

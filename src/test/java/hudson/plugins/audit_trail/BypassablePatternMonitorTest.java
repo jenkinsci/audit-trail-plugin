@@ -1,21 +1,21 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.jvnet.hudson.test.Issue;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Created by Pierre Beitz
  */
-@RunWith(MockitoJUnitRunner.class)
-public class BypassablePatternMonitorTest {
+@ExtendWith(MockitoExtension.class)
+class BypassablePatternMonitorTest {
 
     @Mock
     private AuditTrailPlugin plugin;
@@ -25,28 +25,28 @@ public class BypassablePatternMonitorTest {
 
     @Issue("SECURITY-1846")
     @Test
-    public void aProperlyProtectedPatternShouldNotTriggerTheMonitor() {
+    void aProperlyProtectedPatternShouldNotTriggerTheMonitor() {
         when(plugin.getPattern()).thenReturn(".*/configSubmit/?.*");
         assertFalse(monitor.isActivated());
     }
 
     @Issue("SECURITY-1846")
     @Test
-    public void aSuffixVulnerablePatternShouldTriggerTheMonitor() {
+    void aSuffixVulnerablePatternShouldTriggerTheMonitor() {
         when(plugin.getPattern()).thenReturn(".*/configSubmit");
         assertTrue(monitor.isActivated());
     }
 
     @Issue("SECURITY-1846")
     @Test
-    public void aPrefixVulnerablePatternShouldTriggerTheMonitor() {
+    void aPrefixVulnerablePatternShouldTriggerTheMonitor() {
         when(plugin.getPattern()).thenReturn("/configSubmit/?.*");
         assertTrue(monitor.isActivated());
     }
 
     @Issue("SECURITY-1846")
     @Test
-    public void aPrefixAndSuffixVulnerablePatternShouldTriggerTheMonitor() {
+    void aPrefixAndSuffixVulnerablePatternShouldTriggerTheMonitor() {
         when(plugin.getPattern()).thenReturn("/configSubmit");
         assertTrue(monitor.isActivated());
     }

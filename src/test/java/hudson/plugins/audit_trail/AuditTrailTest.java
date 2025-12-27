@@ -24,19 +24,20 @@
 package hudson.plugins.audit_trail;
 
 import static hudson.plugins.audit_trail.LogFileAuditLogger.DEFAULT_LOG_SEPARATOR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import jenkins.model.GlobalConfiguration;
@@ -45,10 +46,8 @@ import org.htmlunit.HttpMethod;
 import org.htmlunit.WebRequest;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -56,75 +55,67 @@ import org.jvnet.hudson.test.JenkinsRule;
  * Test interaction of audit-trail plugin with Jenkins core.
  *
  * @author Alan Harder
+ * @author Pierre Beitz
  */
-public class AuditTrailTest {
-
-    @Rule
-    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
-
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
-
-    @After
-    public void tearDown() {
-        tmpDir.delete();
-    }
+@WithJenkinsConfiguredWithCode
+class AuditTrailTest {
 
     @Test
-    public void shouldGenerateTwoAuditLogs() throws Exception {
+    void shouldGenerateTwoAuditLogs(JenkinsConfiguredWithCodeRule j, @TempDir Path tmpDir) throws Exception {
         // Given
         // Configure plugin
-        File logFile = new File(tmpDir.getRoot(), "test.log");
+        File logFile = new File(tmpDir.toFile(), "test.log");
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         AuditTrailPlugin plugin = GlobalConfiguration.all().get(AuditTrailPlugin.class);
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
-        assertEquals("log path", logFile.getPath(), logger.getLog());
-        assertEquals("log size", 1, logger.getLimit());
-        assertEquals("log count", 2, logger.getCount());
-        assertTrue("log build cause", plugin.getLogBuildCause());
-        assertTrue("log credentials usage", plugin.shouldLogCredentialsUsage());
+        assertEquals(logFile.getPath(), logger.getLog(), "log path");
+        assertEquals(1, logger.getLimit(), "log size");
+        assertEquals(2, logger.getCount(), "log count");
+        assertTrue(plugin.getLogBuildCause(), "log build cause");
+        assertTrue(plugin.shouldLogCredentialsUsage(), "log credentials usage");
         // When
-        createJobAndPush();
+        createJobAndPush(j);
 
         // Then
-        String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), Charset.forName("UTF-8"));
+        String log = Util.loadFile(new File(tmpDir.toFile(), "test.log.0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".* job/test-job/ #1 Started by user" + " .*job/test-job/enable by .*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Issue("JENKINS-44129")
     @Test
-    public void shouldCorrectlyCleanUpFileHandlerOnApply() throws Exception {
+    void shouldCorrectlyCleanUpFileHandlerOnApply(JenkinsConfiguredWithCodeRule j, @TempDir Path tmpDir)
+            throws Exception {
         // Given
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage configure = wc.goTo("configure");
         HtmlForm form = configure.getFormByName("config");
 
         // When
-        File logFile = new File(tmpDir.getRoot(), "unique.log");
+        File logFile = new File(tmpDir.toFile(), "unique.log");
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         // Then
         assertEquals(
-                "Only two files should be present, the file opened by the FileHandler and its lock",
                 2,
-                tmpDir.getRoot().list().length);
+                tmpDir.toFile().list().length,
+                "Only two files should be present, the file opened by the FileHandler and its lock");
     }
 
     @Issue("JENKINS-60421")
     @Test
     @ConfiguredWithCode("jcasc-console-and-file.yml")
-    public void shouldGenerateAuditLogsWhenSetupWithJCasc()
+    void shouldGenerateAuditLogsWhenSetupWithJCasc(JenkinsConfiguredWithCodeRule j)
             throws IOException, ExecutionException, InterruptedException {
         // the injected jcasc assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
-        createJobAndPush();
+        createJobAndPush(j);
 
         // https://github.com/jenkinsci/configuration-as-code-plugin/issues/899#issuecomment-524641582 log is 1, not 0
         // because of this.
@@ -136,10 +127,10 @@ public class AuditTrailTest {
         logFile.deleteOnExit();
         String log = Util.loadFile(logFile, StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".* job/test-job/ #1 Started by user" + " .*job/test-job/enable by .*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
 
         // covering the console case will require refactoring as currently the console logger is directly using
         // System.out/err
@@ -148,18 +139,17 @@ public class AuditTrailTest {
 
     @Issue("JENKINS-60421")
     @Test
-    public void loggerShouldBeProperlyConfiguredWhenLoadedFromXml()
-            throws IOException, ExecutionException, InterruptedException {
+    void loggerShouldBeProperlyConfiguredWhenLoadedFromXml() throws IOException {
         // the injected xml assumes the temp directory is /tmp so let's skip windows
         assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
 
         AuditTrailPlugin plugin = load("sample.xml", getClass());
         LogFileAuditLogger logger = (LogFileAuditLogger) plugin.getLoggers().get(0);
-        assertEquals("log path", "/tmp/xml-logs", logger.getLog());
-        assertEquals("log size", 100, logger.getLimit());
-        assertEquals("log count", 5, logger.getCount());
-        assertEquals("log separator", DEFAULT_LOG_SEPARATOR, logger.getLogSeparator());
-        assertTrue("log build cause", plugin.getLogBuildCause());
+        assertEquals("/tmp/xml-logs", logger.getLog(), "log path");
+        assertEquals(100, logger.getLimit(), "log size");
+        assertEquals(5, logger.getCount(), "log count");
+        assertEquals(DEFAULT_LOG_SEPARATOR, logger.getLogSeparator(), "log separator");
+        assertTrue(plugin.getLogBuildCause(), "log build cause");
 
         String message = "hello";
         plugin.getLoggers().get(0).log(message);
@@ -167,7 +157,7 @@ public class AuditTrailTest {
         File logFile = new File("/tmp", "xml-logs.0");
         logFile.deleteOnExit();
         String log = Util.loadFile(logFile, StandardCharsets.UTF_8);
-        assertTrue("logged actions: " + log, log.contains(message));
+        assertTrue(log.contains(message), () -> "logged actions: " + log);
 
         // covering the console case will require refactoring as currently the console logger is directly using
         // System.out/err
@@ -178,7 +168,8 @@ public class AuditTrailTest {
         return (AuditTrailPlugin) Jenkins.XSTREAM2.fromXML(clasz.getResource(fileName));
     }
 
-    private void createJobAndPush() throws IOException, InterruptedException, ExecutionException {
+    private void createJobAndPush(JenkinsConfiguredWithCodeRule j)
+            throws IOException, InterruptedException, ExecutionException {
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
         JenkinsRule.WebClient wc = j.createWebClient();
