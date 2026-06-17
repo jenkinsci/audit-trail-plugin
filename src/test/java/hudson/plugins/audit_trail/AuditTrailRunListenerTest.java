@@ -1,10 +1,11 @@
 package hudson.plugins.audit_trail;
 
 import static hudson.plugins.audit_trail.BasicNodeNameRetriever.UNKNOWN_NODE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -18,33 +19,31 @@ import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import hudson.model.labels.LabelAtom;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.mockito.Mockito;
 
 /**
- * Created by Pierre Beitz
- * on 31/12/2019.
+ * @author Pierre Beitz
  */
-public class AuditTrailRunListenerTest {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class AuditTrailRunListenerTest {
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir
+    Path tmpDir;
 
     @Issue("JENKINS-12848")
     @Test
-    public void jobParametersAreProperlyLogged() throws Exception {
+    void jobParametersAreProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobParametersAreProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
@@ -54,40 +53,40 @@ public class AuditTrailRunListenerTest {
                 new BooleanParameterDefinition("booleanParam", false, "")));
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(
                                 ".*, Parameters:\\[stringParam: \\{value1\\}, booleanParam: \\{false\\}\\].*",
                                 Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Issue("JENKINS-12848")
     @Test
-    public void jobWithoutParameterIsProperlyLogged() throws Exception {
+    void jobWithoutParameterIsProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobWithoutParameterIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
         FreeStyleProject job = j.createFreeStyleProject("test-job");
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*, Parameters:\\[\\].*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Issue("JENKINS-12848")
     @Test
-    public void jobWithSecretParameterIsProperlyLogged() throws Exception {
+    void jobWithSecretParameterIsProperlyLogged(JenkinsRule j) throws Exception {
         String logFileName = "jobWithSecretParameterIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
@@ -96,19 +95,19 @@ public class AuditTrailRunListenerTest {
                 new ParametersDefinitionProperty(new PasswordParameterDefinition("passParam", "thisIsASecret", "")));
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*, Parameters:\\[passParam: \\{\\*\\*\\*\\*\\}\\].*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                () -> "logged actions: " + log);
     }
 
     @Issue("JENKINS-62812")
     @Test
-    public void ifSetToNotLogBuildCauseShouldNotLogThem() throws Exception {
+    void ifSetToNotLogBuildCauseShouldNotLogThem(JenkinsRule j) throws Exception {
         String logFileName = "ifSetToNotLogBuildCauseShouldNotLogThem.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogBuildCause(false)
@@ -119,13 +118,13 @@ public class AuditTrailRunListenerTest {
                 new ParametersDefinitionProperty(new PasswordParameterDefinition("passParam", "thisIsASecret", "")));
         job.scheduleBuild2(0, new Cause.UserIdCause()).get();
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
         assertTrue(log.isEmpty());
     }
 
     @Issue("JENKINS-71637")
     @Test
-    public void buildNodeNameIsProperlyExtractedFromTheRun() {
+    void buildNodeNameIsProperlyExtractedFromTheRun(JenkinsRule $) {
         var listener = new AuditTrailRunListener();
 
         var notAbstractBuild = Mockito.mock(Run.class);
@@ -144,9 +143,9 @@ public class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-71637")
     @Test
-    public void shouldWorkflowRunAgentName() throws Exception {
+    public void shouldWorkflowRunAgentName(JenkinsRule j) throws Exception {
         var logFileName = "shouldLogWorkflowRunAgentName.log";
-        var logFile = new File(tmpDir.getRoot(), logFileName);
+        var logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogBuildCause(true)
@@ -176,7 +175,7 @@ public class AuditTrailRunListenerTest {
 
         System.out.println(run.getLog());
 
-        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        var log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
 
         // the API creates agents with name slaveN
         assertThat(log, containsString("slave0"));
@@ -184,9 +183,9 @@ public class AuditTrailRunListenerTest {
 
     @Issue("JENKINS-71637")
     @Test
-    public void shouldLogPerStageWorkflowRunAgentName() throws Exception {
+    public void shouldLogPerStageWorkflowRunAgentName(JenkinsRule j) throws Exception {
         var logFileName = "shouldLogPerStageWorkflowRunAgentName.log";
-        var logFile = new File(tmpDir.getRoot(), logFileName);
+        var logFile = tmpDir.resolve(logFileName).toFile();
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogBuildCause(true)
@@ -223,7 +222,7 @@ public class AuditTrailRunListenerTest {
         workflowJob.save();
         workflowJob.scheduleBuild2(0).get();
 
-        var log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        var log = Util.loadFile(tmpDir.resolve(logFileName + ".0").toFile(), UTF_8);
 
         assertThat(log, containsString("Built-In Node"));
         // the API creates agents with name slaveN
