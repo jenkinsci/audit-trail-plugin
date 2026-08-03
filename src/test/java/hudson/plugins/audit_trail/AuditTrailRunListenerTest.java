@@ -155,8 +155,7 @@ public class AuditTrailRunListenerTest {
         j.createOnlineSlave(new LabelAtom("node-1"));
 
         var workflowJob = j.createProject(WorkflowJob.class, "job-1");
-        workflowJob.setDefinition(new CpsFlowDefinition(
-                """
+        workflowJob.setDefinition(new CpsFlowDefinition("""
                         pipeline {
                           agent {
                             label 'node-1'
@@ -169,8 +168,7 @@ public class AuditTrailRunListenerTest {
                             }
                           }
                         }
-                        """,
-                true));
+                        """, true));
         workflowJob.save();
         var run = workflowJob.scheduleBuild2(0).get();
 
@@ -195,8 +193,7 @@ public class AuditTrailRunListenerTest {
         j.createOnlineSlave(new LabelAtom("node-1"));
 
         var workflowJob = j.createProject(WorkflowJob.class, "job-1");
-        workflowJob.setDefinition(new CpsFlowDefinition(
-                """
+        workflowJob.setDefinition(new CpsFlowDefinition("""
                         pipeline {
                           agent none
                           stages {
@@ -218,8 +215,7 @@ public class AuditTrailRunListenerTest {
                             }
                           }
                         }
-                        """,
-                true));
+                        """, true));
         workflowJob.save();
         workflowJob.scheduleBuild2(0).get();
 
