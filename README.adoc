@@ -71,6 +71,11 @@ Defaults to true.
 
 Will log potentially dangerous groovy scripts, for example from the script console. Defaults to true.
 
+=== Log authentication events
+
+When this option is enabled, successful logins, failed login attempts and logouts are logged. This is
+detected by hooking into Jenkins' authentication events directly. Defaults to true.
+
 === About the client IP-address appearing in the logs
 ====
 The plugin uses a method that cannot guarantee that the actual IP of the client is captured.
