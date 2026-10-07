@@ -394,8 +394,8 @@ public class ElasticSearchAuditLogger extends AuditLogger {
                 } else {
                     LOGGER.log(
                             Level.WARNING,
-                            "Audit event not sent to Elastic Search server: " + event + " - " + this,
-                            getErrorMessage(response));
+                            "Audit event not sent to Elastic Search server: {0} - {1} - {2}",
+                            new Object[] {event, this, getErrorMessage(response)});
                 }
                 return response;
             });
