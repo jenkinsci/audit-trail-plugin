@@ -72,11 +72,10 @@ public class AuthenticationAuditListener extends SecurityListener {
         if (!configuration.shouldLogAuthEvents()) return;
 
         String key = username != null ? username : "<unknown>";
-        if (recentlyLoggedFailedLogins.getIfPresent(key) != null) {
+        if (recentlyLoggedFailedLogins.asMap().putIfAbsent(key, Boolean.TRUE) != null) {
             // Skip duplicate callback for the same failed attempt - see comment beside FAILED_LOGIN_DEDUP_WINDOW_MS
             return;
         }
-        recentlyLoggedFailedLogins.put(key, Boolean.TRUE);
 
         log(String.format("Failed login attempt for user '%s'", key));
     }
