@@ -85,40 +85,57 @@ public class AuditTrailFilter implements HttpServletFilter {
 
     @Override
     public boolean handle(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServletException {
+        // Read everything needed from the request here, on the request thread. The request object is not
+        // thread-safe: parsing its parameters concurrently with the request thread can leave Jenkins with an
+        // empty parameter map, and the request may already be recycled when the executor runs (JENKINS-76557).
+        String uri = getPathInfo(req);
+        if (uriPattern == null || !uriPattern.matcher(uri).matches()) {
+            LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
+            return false;
+        }
         User user = User.current();
-        executorService.submit(() -> logRequest(req, user));
+        String remoteIP = req.getRemoteAddr();
+        String cancelItemId = null;
+        String createItemName = null;
+        if (uri.startsWith("/queue/cancelItem")) {
+            cancelItemId = req.getParameter("id");
+            // not sure of the intent of the original author
+            // it looks to me we should always log the query parameters
+            // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded
+            // plugin
+            // let's see if this becomes a wanted feature...
+            uri += "?" + req.getQueryString();
+        } else if (uri.contains("/createItem")) {
+            createItemName = req.getParameter("name");
+        }
+        AuditedRequest auditedRequest = new AuditedRequest(uri, remoteIP, cancelItemId, createItemName);
+        executorService.submit(() -> logRequest(auditedRequest, user));
         return false;
     }
 
-    private void logRequest(HttpServletRequest request, User user) {
-        String uri = getPathInfo(request);
-        if (uriPattern != null && uriPattern.matcher(uri).matches()) {
-            String remoteIP = request.getRemoteAddr();
-            String extra = "";
-            // For queue items, show what task is in the queue:
-            if (uri.startsWith("/queue/item/")) {
-                extra = extractInfoFromQueueItem(uri);
-            } else if (uri.startsWith("/queue/cancelItem")) {
-                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(request.getParameter("id")));
-                // not sure of the intent of the original author
-                // it looks to me we should always log the query parameters
-                // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded
-                // plugin
-                // let's see if this becomes a wanted feature...
-                uri += "?" + request.getQueryString();
-            } else if (uri.contains("/createItem")) {
-                extra = formatExtraInfoString(request.getParameter("name"));
-            }
+    /**
+     * The values {@link #logRequest} needs, copied from the request on the request thread.
+     */
+    private record AuditedRequest(String uri, String remoteIP, String cancelItemId, String createItemName) {}
 
-            String username = user != null ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId()) : "NA";
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(
-                        Level.FINE, "Audit request {0} by user {1} from {2}", new Object[] {uri, username, remoteIP});
-
-            onRequest(uri, extra, username, remoteIP);
-        } else {
-            LOGGER.log(Level.FINEST, "Skip audit for request {0}", uri);
+    private void logRequest(AuditedRequest request, User user) {
+        String uri = request.uri();
+        String remoteIP = request.remoteIP();
+        String extra = "";
+        // For queue items, show what task is in the queue:
+        if (uri.startsWith("/queue/item/")) {
+            extra = extractInfoFromQueueItem(uri);
+        } else if (uri.startsWith("/queue/cancelItem")) {
+            extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(request.cancelItemId()));
+        } else if (uri.contains("/createItem")) {
+            extra = formatExtraInfoString(request.createItemName());
         }
+
+        String username = user != null ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId()) : "NA";
+        if (LOGGER.isLoggable(Level.FINE))
+            LOGGER.log(Level.FINE, "Audit request {0} by user {1} from {2}", new Object[] {uri, username, remoteIP});
+
+        onRequest(uri, extra, username, remoteIP);
     }
 
     private boolean isShouldDisplayUserName() {

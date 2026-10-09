@@ -2,12 +2,17 @@ package hudson.plugins.audit_trail;
 
 import static org.junit.Assert.assertTrue;
 
+import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.Cause;
 import hudson.model.FreeStyleProject;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.HttpMethod;
@@ -84,5 +89,60 @@ public class AuditTrailFilterTest {
                 Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL)
                         .matcher(log)
                         .matches());
+    }
+
+    @Issue("JENKINS-76557")
+    @Test
+    public void requestIsNotAccessedAfterHandleReturns() throws Exception {
+        File logFile = new File(tmpDir.getRoot(), "request-thread.log");
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
+
+        // Request objects are not thread-safe and Jetty recycles them, so the filter must only touch the request
+        // on the request thread, before handle() returns. This request fails every call that breaks that rule.
+        Thread requestThread = Thread.currentThread();
+        AtomicBoolean handled = new AtomicBoolean();
+        Map<String, String> parameters = Map.of("name", "created-from-api");
+        HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[] {HttpServletRequest.class}, (proxy, method, args) -> {
+                    if (Thread.currentThread() != requestThread) {
+                        throw new IllegalStateException("request accessed from "
+                                + Thread.currentThread().getName() + ": " + method.getName());
+                    }
+                    if (handled.get()) {
+                        throw new IllegalStateException("request accessed after handle(): " + method.getName());
+                    }
+                    switch (method.getName()) {
+                        case "getRequestURI":
+                            return "/jenkins/createItem";
+                        case "getContextPath":
+                            return "/jenkins";
+                        case "getRemoteAddr":
+                            return "127.0.0.1";
+                        case "getParameter":
+                            return parameters.get((String) args[0]);
+                        default:
+                            return null;
+                    }
+                });
+
+        AuditTrailFilter filter = ExtensionList.lookupSingleton(AuditTrailFilter.class);
+        filter.handle(request, null);
+        handled.set(true);
+
+        File log = new File(tmpDir.getRoot(), "request-thread.log.0");
+        // the test thread runs as SYSTEM
+        Pattern expected = Pattern.compile(
+                ".*/createItem \\(created-from-api\\) by SYSTEM from 127\\.0\\.0\\.1.*", Pattern.DOTALL);
+        long deadline = System.currentTimeMillis() + 10_000;
+        String content = "";
+        while (System.currentTimeMillis() < deadline) {
+            content = log.exists() ? Util.loadFile(log, StandardCharsets.UTF_8) : "";
+            if (expected.matcher(content).matches()) {
+                break;
+            }
+            Thread.sleep(100);
+        }
+        assertTrue("logged actions: " + content, expected.matcher(content).matches());
     }
 }
