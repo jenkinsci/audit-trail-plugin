@@ -23,6 +23,9 @@
       <f:entry title="${%Log Groovy scripts}">
         <f:checkbox name="logScriptUsage" checked="${descriptor.logScriptUsage}"/>
       </f:entry>
+      <f:entry field="logAuthEvents" title="${%Log authentication events}">
+        <f:checkbox checked="${descriptor.logAuthEvents}"/>
+      </f:entry>
     </f:advanced>
   </f:section>
 </j:jelly>
