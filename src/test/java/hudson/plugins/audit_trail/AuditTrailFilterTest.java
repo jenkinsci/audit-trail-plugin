@@ -145,4 +145,72 @@ public class AuditTrailFilterTest {
         }
         assertTrue("logged actions: " + content, expected.matcher(content).matches());
     }
+
+    @Issue("JENKINS-76557")
+    @Test
+    public void patternIsMatchedOffTheRequestThread() throws Exception {
+        File logFile = new File(tmpDir.getRoot(), "slow-pattern.log");
+        JenkinsRule.WebClient wc = j.createWebClient();
+        new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
+
+        // The first branch backtracks exponentially on a run of 'a' (the backreference disables the JDK's
+        // memoization), the second one matches anything, so the request is eventually audited.
+        String slowPattern = "/(a|a)*\\1b|.*";
+        Pattern pattern = Pattern.compile(slowPattern);
+        // grow the path until matching it takes long enough to measure, independently of the machine speed
+        String path;
+        long matchNanos;
+        int length = 16;
+        do {
+            length += 2;
+            path = "/" + "a".repeat(length) + "!";
+            long start = System.nanoTime();
+            pattern.matcher(path).matches();
+            matchNanos = System.nanoTime() - start;
+        } while (matchNanos < 300_000_000L && length < 30);
+
+        String requestURI = "/jenkins" + path;
+        HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[] {HttpServletRequest.class}, (proxy, method, args) -> {
+                    switch (method.getName()) {
+                        case "getRequestURI":
+                            return requestURI;
+                        case "getContextPath":
+                            return "/jenkins";
+                        case "getRemoteAddr":
+                            return "127.0.0.1";
+                        default:
+                            return null;
+                    }
+                });
+
+        AuditTrailFilter filter = ExtensionList.lookupSingleton(AuditTrailFilter.class);
+        AuditTrailFilter.setPattern(slowPattern);
+        try {
+            long start = System.nanoTime();
+            filter.handle(request, null);
+            long handleNanos = System.nanoTime() - start;
+            assertTrue(
+                    "handle() took " + handleNanos / 1_000_000 + " ms, matching the pattern takes "
+                            + matchNanos / 1_000_000 + " ms",
+                    handleNanos < matchNanos / 3);
+
+            // the executor did match the pattern and audited the request
+            File log = new File(tmpDir.getRoot(), "slow-pattern.log.0");
+            Pattern expected =
+                    Pattern.compile(".*" + Pattern.quote(path) + " by SYSTEM from 127\\.0\\.0\\.1.*", Pattern.DOTALL);
+            long deadline = System.currentTimeMillis() + 10 * matchNanos / 1_000_000 + 10_000;
+            String content = "";
+            while (System.currentTimeMillis() < deadline) {
+                content = log.exists() ? Util.loadFile(log, StandardCharsets.UTF_8) : "";
+                if (expected.matcher(content).matches()) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            assertTrue("logged actions: " + content, expected.matcher(content).matches());
+        } finally {
+            AuditTrailFilter.setPattern(AuditTrailPlugin.DEFAULT_PATTERN);
+        }
+    }
 }
