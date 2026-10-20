@@ -20,6 +20,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private static final String LOG_BUILD_CAUSE_INPUT_NAME = "_.logBuildCause";
     private static final String LOG_CREDENTIALS_USAGE_INPUT_NAME = "_.logCredentialsUsage";
     private static final String LOG_SCRIPT_USAGE_INPUT_NAME = "logScriptUsage";
+    private static final String LOG_AUTH_EVENTS_INPUT_NAME = "_.logAuthEvents";
     private static final String ADD_LOGGER_BUTTON_TEXT = "Add Logger";
     private static final String LOG_FILE_COMBO_TEXT = new LogFileAuditLogger.DescriptorImpl().getDisplayName();
     private static final String DISPLAY_USER_NAME_INPUT_NAME = "_.displayUserName";
@@ -30,6 +31,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
     private boolean logCredentialsUsage = true;
     private boolean displayUserName = false;
     private boolean logScriptUsage = true;
+    private boolean logAuthEvents = true;
     private String pattern = ".*/(?:enable|cancelItem|quietDown|createItem)/?.*";
 
     public SimpleAuditTrailPluginConfiguratorHelper(File logFile) {
@@ -56,6 +58,11 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         return this;
     }
 
+    public SimpleAuditTrailPluginConfiguratorHelper withLogAuthEvents(boolean logAuthEvents) {
+        this.logAuthEvents = logAuthEvents;
+        return this;
+    }
+
     public SimpleAuditTrailPluginConfiguratorHelper withPattern(String pattern) {
         this.pattern = pattern;
         return this;
@@ -76,6 +83,7 @@ public class SimpleAuditTrailPluginConfiguratorHelper {
         form.getInputByName(LOG_CREDENTIALS_USAGE_INPUT_NAME).setChecked(logCredentialsUsage);
         form.getInputByName(DISPLAY_USER_NAME_INPUT_NAME).setChecked(displayUserName);
         form.getInputByName(LOG_SCRIPT_USAGE_INPUT_NAME).setChecked(logScriptUsage);
+        form.getInputByName(LOG_AUTH_EVENTS_INPUT_NAME).setChecked(logAuthEvents);
         j.submit(form);
     }
 }

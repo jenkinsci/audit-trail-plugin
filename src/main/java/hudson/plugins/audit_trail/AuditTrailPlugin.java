@@ -70,6 +70,7 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     private boolean displayUserName = false;
     private boolean logCredentialsUsage = true;
     private boolean logScriptUsage = false;
+    private boolean logAuthEvents = true;
 
     private List<AuditLogger> loggers = new ArrayList<>();
 
@@ -112,6 +113,14 @@ public class AuditTrailPlugin extends GlobalConfiguration {
 
     public boolean shouldLogBuildCause() {
         return logBuildCause;
+    }
+
+    public boolean getLogAuthEvents() {
+        return shouldLogAuthEvents();
+    }
+
+    public boolean shouldLogAuthEvents() {
+        return logAuthEvents;
     }
 
     public boolean getLogCredentialsUsage() {
@@ -193,6 +202,12 @@ public class AuditTrailPlugin extends GlobalConfiguration {
     @DataBoundSetter
     public void setLogScriptUsage(boolean logScriptUsage) {
         this.logScriptUsage = logScriptUsage;
+        save();
+    }
+
+    @DataBoundSetter
+    public void setLogAuthEvents(boolean logAuthEvents) {
+        this.logAuthEvents = logAuthEvents;
         save();
     }
 

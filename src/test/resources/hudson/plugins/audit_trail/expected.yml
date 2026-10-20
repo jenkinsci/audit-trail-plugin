@@ -1,4 +1,5 @@
 displayUserName: false
+logAuthEvents: true
 logBuildCause: true
 logCredentialsUsage: true
 logScriptUsage: false
