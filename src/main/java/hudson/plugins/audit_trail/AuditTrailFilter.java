@@ -85,29 +85,52 @@ public class AuditTrailFilter implements HttpServletFilter {
 
     @Override
     public boolean handle(HttpServletRequest req, HttpServletResponse rsp) throws IOException, ServletException {
+        // Copy the values the audit line needs here, on the request thread. The request object is not thread-safe:
+        // parsing its parameters concurrently with the request thread can leave Jenkins with an empty parameter map,
+        // and the request may already be recycled when the executor runs (JENKINS-76557).
+        // Only plain reads happen here, the path canonicalization and the pattern match stay on the executor.
+        String requestURI = req.getRequestURI();
+        String contextPath = req.getContextPath();
+        String remoteIP = req.getRemoteAddr();
+        String queryString = req.getQueryString();
+        // Jenkins reads these parameters on the same request right after this filter, so this only moves the
+        // parsing earlier. The executor still decides from the canonical path whether the value is used.
+        String parameter = null;
+        if (requestURI.contains("/createItem")) {
+            parameter = req.getParameter("name");
+        } else if (requestURI.contains("/queue/cancelItem")) {
+            parameter = req.getParameter("id");
+        }
         User user = User.current();
-        executorService.submit(() -> logRequest(req, user));
+        AuditedRequest auditedRequest = new AuditedRequest(requestURI, contextPath, remoteIP, queryString, parameter);
+        executorService.submit(() -> logRequest(auditedRequest, user));
         return false;
     }
 
-    private void logRequest(HttpServletRequest request, User user) {
-        String uri = getPathInfo(request);
+    /**
+     * The values {@link #logRequest} needs, copied from the request on the request thread.
+     */
+    private record AuditedRequest(
+            String requestURI, String contextPath, String remoteIP, String queryString, String parameter) {}
+
+    private void logRequest(AuditedRequest request, User user) {
+        String uri = getPathInfo(request.requestURI(), request.contextPath());
         if (uriPattern != null && uriPattern.matcher(uri).matches()) {
-            String remoteIP = request.getRemoteAddr();
+            String remoteIP = request.remoteIP();
             String extra = "";
             // For queue items, show what task is in the queue:
             if (uri.startsWith("/queue/item/")) {
                 extra = extractInfoFromQueueItem(uri);
             } else if (uri.startsWith("/queue/cancelItem")) {
-                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(request.getParameter("id")));
+                extra = getFormattedQueueItemUrlFromItemId(Integer.parseInt(request.parameter()));
                 // not sure of the intent of the original author
                 // it looks to me we should always log the query parameters
                 // could we leak sensitive data?  There shouldn't be any in a query parameter...except for a badly coded
                 // plugin
                 // let's see if this becomes a wanted feature...
-                uri += "?" + request.getQueryString();
+                uri += "?" + request.queryString();
             } else if (uri.contains("/createItem")) {
-                extra = formatExtraInfoString(request.getParameter("name"));
+                extra = formatExtraInfoString(request.parameter());
             }
 
             String username = user != null ? (isShouldDisplayUserName() ? user.getDisplayName() : user.getId()) : "NA";
@@ -158,9 +181,8 @@ public class AuditTrailFilter implements HttpServletFilter {
     }
 
     // See SECURITY-1815
-    private static String getPathInfo(HttpServletRequest request) {
-        return canonicalPath(
-                request.getRequestURI().substring(request.getContextPath().length()));
+    private static String getPathInfo(String requestURI, String contextPath) {
+        return canonicalPath(requestURI.substring(contextPath.length()));
     }
 
     // Copied from Stapler#canonicalPath
