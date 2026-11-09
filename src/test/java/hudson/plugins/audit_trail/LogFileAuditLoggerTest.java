@@ -1,41 +1,40 @@
 package hudson.plugins.audit_trail;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import hudson.EnvVars;
+import java.io.File;
 import java.nio.file.Path;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy.IgnoreFailures;
 import org.jvnet.hudson.test.Issue;
 
 /**
  * Created by Pierre Beitz
  * on 2019-05-05.
  */
-public class LogFileAuditLoggerTest {
+class LogFileAuditLoggerTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
+    @TempDir(deletionStrategy = IgnoreFailures.class)
+    private File folder;
 
     @Issue("JENKINS-56108")
     @Test
-    public void configuringAFileLoggerWithNonExistingParents() {
-        Path logFile = folder.getRoot().toPath().resolve("subdirectory").resolve("file");
+    void configuringAFileLoggerWithNonExistingParents() {
+        Path logFile = folder.toPath().resolve("subdirectory").resolve("file");
         new LogFileAuditLogger(logFile.toString(), 5, 1, null);
-        Assert.assertTrue(logFile.toFile().exists());
+        assertTrue(logFile.toFile().exists());
     }
 
     @Issue("JENKINS-67493")
     @Test
-    public void environmentVariablesAreProperlyExpanded() {
-        Path rootFolder = folder.getRoot().toPath();
+    void environmentVariablesAreProperlyExpanded() {
+        Path rootFolder = folder.toPath();
         EnvVars.masterEnvVars.put("EXPAND_ME", "expandMe");
         String logFile = rootFolder.resolve("${EXPAND_ME}").toString();
         LogFileAuditLogger logger = new LogFileAuditLogger(logFile, 5, 1, null);
-        Assert.assertEquals(rootFolder.resolve("expandMe").toString(), logger.getLog());
+        assertEquals(rootFolder.resolve("expandMe").toString(), logger.getLog());
     }
 }

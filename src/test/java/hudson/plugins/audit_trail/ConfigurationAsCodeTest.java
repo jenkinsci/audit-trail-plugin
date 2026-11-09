@@ -2,31 +2,30 @@ package hudson.plugins.audit_trail;
 
 import static io.jenkins.plugins.casc.misc.Util.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.model.CNode;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
 /**
  * Created by Pierre Beitz
  * on 2019-07-20.
  */
-public class ConfigurationAsCodeTest {
+@WithJenkinsConfiguredWithCode
+class ConfigurationAsCodeTest {
 
-    @ClassRule
     @ConfiguredWithCode("jcasc.yml")
-    public static JenkinsConfiguredWithCodeRule r = new JenkinsConfiguredWithCodeRule();
-
     @Issue("JENKINS-57232")
     @Test
-    public void should_support_configuration_as_code() {
+    void should_support_configuration_as_code(JenkinsConfiguredWithCodeRule r) {
         ExtensionList<AuditTrailPlugin> extensionList = r.jenkins.getExtensionList(AuditTrailPlugin.class);
         AuditTrailPlugin plugin = extensionList.get(0);
         assertEquals(
@@ -39,14 +38,14 @@ public class ConfigurationAsCodeTest {
 
         // first logger
         AuditLogger logger = plugin.getLoggers().get(0);
-        assertTrue(logger instanceof ConsoleAuditLogger);
+        assertInstanceOf(ConsoleAuditLogger.class, logger);
         assertEquals("test", ((ConsoleAuditLogger) logger).getLogPrefix());
         assertEquals(ConsoleAuditLogger.Output.STD_OUT, ((ConsoleAuditLogger) logger).getOutput());
         assertEquals("yyyy-MM-dd HH:mm:ss:SSS", ((ConsoleAuditLogger) logger).getDateFormat());
 
         // second logger
         logger = plugin.getLoggers().get(1);
-        assertTrue(logger instanceof LogFileAuditLogger);
+        assertInstanceOf(LogFileAuditLogger.class, logger);
         assertEquals(10, ((LogFileAuditLogger) logger).getCount());
         assertEquals(666, ((LogFileAuditLogger) logger).getLimit());
         assertEquals("/log/location", ((LogFileAuditLogger) logger).getLog());
@@ -62,9 +61,10 @@ public class ConfigurationAsCodeTest {
         assertEquals(514, ((SyslogAuditLogger) logger).getSyslogServerPort());
     }
 
+    @ConfiguredWithCode("jcasc.yml")
     @Issue("JENKINS-57232")
     @Test
-    public void should_support_configuration_export() throws Exception {
+    void should_support_configuration_export(JenkinsConfiguredWithCodeRule r) throws Exception {
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
         CNode auditTrailAttribute = getUnclassifiedRoot(context).get("audit-trail");
