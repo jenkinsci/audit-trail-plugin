@@ -1,6 +1,6 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -11,21 +11,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.Issue;
 
-public class AuditTrailFilterRequestThreadTest {
+class AuditTrailFilterRequestThreadTest {
 
-    @After
-    public void resetPattern() {
+    @AfterEach
+    void resetPattern() {
         AuditTrailFilter.setPattern(AuditTrailPlugin.DEFAULT_PATTERN);
     }
 
     @Issue("JENKINS-76557")
     @Test
     @SuppressWarnings("deprecation")
-    public void requestIsOnlyReadOnTheRequestThread() throws Exception {
+    void requestIsOnlyReadOnTheRequestThread() throws Exception {
         // Request objects are not thread-safe and Jetty recycles them, so the filter must only read the request on
         // the request thread. Record the thread of every call made on the request.
         Set<Thread> callingThreads = ConcurrentHashMap.newKeySet();

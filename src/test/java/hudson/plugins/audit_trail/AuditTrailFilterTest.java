@@ -1,6 +1,6 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import hudson.Util;
 import hudson.model.Cause;
@@ -14,28 +14,36 @@ import org.htmlunit.HttpMethod;
 import org.htmlunit.WebRequest;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy.IgnoreFailures;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Created by Pierre Beitz
  * on 18/11/2019.
  */
-public class AuditTrailFilterTest {
-    public static final int LONG_DELAY = 50000;
+@WithJenkins
+class AuditTrailFilterTest {
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private static final int LONG_DELAY = 50000;
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    private JenkinsRule j;
+
+    @TempDir(deletionStrategy = IgnoreFailures.class)
+    private File tmpDir;
+
+    @BeforeEach
+    void beforeEach(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Test
-    public void cancelItemLogsTheQueryStringAndTheUser() throws Exception {
-        File logFile = new File(tmpDir.getRoot(), "test.log");
+    void cancelItemLogsTheQueryStringAndTheUser() throws Exception {
+        File logFile = new File(tmpDir, "test.log");
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
@@ -51,18 +59,18 @@ public class AuditTrailFilterTest {
             // see https://issues.jenkins-ci.org/browse/JENKINS-21311
         }
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), "test.log.0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, "test.log.0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*id=1.*job/test-job.*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                "logged actions: " + log);
     }
 
     @Issue("JENKINS-15731")
     @Test
-    public void createItemLogsTheNewItemName() throws Exception {
-        File logFile = new File(tmpDir.getRoot(), "create-item.log");
+    void createItemLogsTheNewItemName() throws Exception {
+        File logFile = new File(tmpDir, "create-item.log");
         JenkinsRule.WebClient wc = j.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(j, wc);
 
@@ -78,11 +86,11 @@ public class AuditTrailFilterTest {
         wc.waitForBackgroundJavaScript(50);
         j.submit(form);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), "create-item.log.0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, "create-item.log.0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(".*createItem \\(" + jobName + "\\).*by \\QNA from 127.0.0.1\\E.*", Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                "logged actions: " + log);
     }
 }

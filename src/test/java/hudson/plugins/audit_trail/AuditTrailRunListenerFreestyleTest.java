@@ -7,29 +7,30 @@ import hudson.Util;
 import hudson.model.labels.LabelAtom;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy.IgnoreFailures;
 import org.jvnet.hudson.test.Issue;
-import org.jvnet.hudson.test.RealJenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.RealJenkinsExtension;
 
 /**
  * Created by Pierre Beitz
  * on 16/08/2025.
  */
-public class AuditTrailRunListenerFreestyleTest {
+class AuditTrailRunListenerFreestyleTest {
 
-    @Rule
-    public RealJenkinsRule rr = new RealJenkinsRule().omitPlugins("workflow-job");
+    @RegisterExtension
+    private final RealJenkinsExtension rr = new RealJenkinsExtension().omitPlugins("workflow-job");
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir(deletionStrategy = IgnoreFailures.class)
+    private File tmpDir;
 
     @Issue("JENKINS-71637")
     @Test
-    public void shouldLogPerStageWorkflowRunAgentNameWithoutPipelineInstalled() throws Throwable {
+    void shouldLogPerStageWorkflowRunAgentNameWithoutPipelineInstalled() throws Throwable {
         var logFileName = "shouldLogPerStageWorkflowRunAgentName.log";
-        var rootDir = tmpDir.getRoot();
+        var rootDir = tmpDir;
         var logFile = new File(rootDir, logFileName);
         rr.startJenkins();
         rr.runRemotely(j -> {

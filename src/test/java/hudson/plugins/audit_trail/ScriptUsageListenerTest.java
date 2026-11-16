@@ -1,6 +1,6 @@
 package hudson.plugins.audit_trail;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -15,26 +15,34 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.servlet.RequestDispatcher;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.io.TempDirDeletionStrategy.IgnoreFailures;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-public class ScriptUsageListenerTest {
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
+@WithJenkins
+class ScriptUsageListenerTest {
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    private JenkinsRule r;
 
-    private final String script = "println('light of the world')";
+    @TempDir(deletionStrategy = IgnoreFailures.class)
+    private File tmpDir;
+
+    private static final String SCRIPT = "println('light of the world')";
+
+    @BeforeEach
+    void beforeEach(JenkinsRule rule) {
+        r = rule;
+    }
 
     @Test
-    public void consoleUsageIsLogged() throws Exception {
+    void consoleUsageIsLogged() throws Exception {
         String logFileName = "consoleUsageIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir, logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
 
@@ -43,70 +51,70 @@ public class ScriptUsageListenerTest {
         StaplerResponse rsp = mock(StaplerResponse.class);
 
         when(req.getMethod()).thenReturn("POST");
-        when(req.getParameter("script")).thenReturn(script);
+        when(req.getParameter("script")).thenReturn(SCRIPT);
         when(req.getView(r.jenkins, "_scriptText.jelly")).thenReturn(view);
         r.jenkins.doScriptText(req, rsp);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(
                                 ".*A groovy script was executed by user 'SYSTEM'\\. Origin: Script Console Controller\\..*The "
-                                        + "executed script:.*" + Pattern.quote(script) + ".*",
+                                        + "executed script:.*" + Pattern.quote(SCRIPT) + ".*",
                                 Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                "logged actions: " + log);
     }
 
     @Test
-    public void groovyCliUsageIsLogged() throws Exception {
+    void groovyCliUsageIsLogged() throws Exception {
         String logFileName = "cliUsageIsProperlyLogged.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir, logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
 
         GroovyCommand cmd = new GroovyCommand();
         cmd.script = "=";
-        InputStream scriptStream = new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8));
+        InputStream scriptStream = new ByteArrayInputStream(SCRIPT.getBytes(StandardCharsets.UTF_8));
         cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(
                                 ".*A groovy script was executed\\. Origin: CLI/GroovyCommand.*The executed script:.*"
-                                        + Pattern.quote(script) + ".*",
+                                        + Pattern.quote(SCRIPT) + ".*",
                                 Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                "logged actions: " + log);
     }
 
     @Test
-    public void groovyShCliUsageIsLogged() throws Exception {
+    void groovyShCliUsageIsLogged() throws Exception {
         String logFileName = "cliUsageIsProperlyLogged2.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir, logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile).sendConfiguration(r, wc);
 
         GroovyshCommand cmd = new GroovyshCommand();
-        InputStream scriptStream = new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8));
+        InputStream scriptStream = new ByteArrayInputStream(SCRIPT.getBytes(StandardCharsets.UTF_8));
         cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(
-                "logged actions: " + log,
                 Pattern.compile(
                                 ".*A groovy script was executed\\. Origin: CLI/GroovySh.*The executed script:.*"
-                                        + Pattern.quote(script) + ".*",
+                                        + Pattern.quote(SCRIPT) + ".*",
                                 Pattern.DOTALL)
                         .matcher(log)
-                        .matches());
+                        .matches(),
+                "logged actions: " + log);
     }
 
     @Test
-    public void disabledLoggingOptionIsRespected() throws Exception {
+    void disabledLoggingOptionIsRespected() throws Exception {
         String logFileName = "disabledCredentialUsageIsRespected.log";
-        File logFile = new File(tmpDir.getRoot(), logFileName);
+        File logFile = new File(tmpDir, logFileName);
         JenkinsRule.WebClient wc = r.createWebClient();
         new SimpleAuditTrailPluginConfiguratorHelper(logFile)
                 .withLogScriptUsage(false)
@@ -114,10 +122,10 @@ public class ScriptUsageListenerTest {
 
         GroovyCommand cmd = new GroovyCommand();
         cmd.script = "=";
-        InputStream scriptStream = new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8));
+        InputStream scriptStream = new ByteArrayInputStream(SCRIPT.getBytes(StandardCharsets.UTF_8));
         cmd.main(new ArrayList<>(), Locale.ENGLISH, scriptStream, System.out, System.err);
 
-        String log = Util.loadFile(new File(tmpDir.getRoot(), logFileName + ".0"), StandardCharsets.UTF_8);
+        String log = Util.loadFile(new File(tmpDir, logFileName + ".0"), StandardCharsets.UTF_8);
         assertTrue(log.isEmpty());
     }
 }
